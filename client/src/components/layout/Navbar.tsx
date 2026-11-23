@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useAttendanceStore } from "@/store/useAttendanceStore";
-import { CalendarCheck, LayoutDashboard, ListFilter, Network } from "lucide-react";
+import { CalendarCheck, LayoutDashboard, ListFilter, Network, UserPlus } from "lucide-react";
 
 export function Navbar() {
   const { isCheckedIn } = useAttendanceStore();
@@ -28,6 +28,10 @@ export function Navbar() {
             <NavLink to="/" className={navLinkClass}>
               <LayoutDashboard className="h-4 w-4" />
               Dashboard
+            </NavLink>
+            <NavLink to="/register" className={navLinkClass}>
+              <UserPlus className="h-4 w-4" />
+              Register
             </NavLink>
             <NavLink to="/records" className={navLinkClass}>
               <ListFilter className="h-4 w-4" />

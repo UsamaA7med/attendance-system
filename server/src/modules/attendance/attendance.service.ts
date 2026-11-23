@@ -14,8 +14,8 @@ export class AttendanceService {
 
     const user = await usersRepository.findById(userId);
     const employeeName = dto.employeeName || user?.name || "Staff Member";
-    const department = dto.department || user?.department || "General";
-    const role = dto.role || user?.position || "Staff";
+    const department = dto.department || "General";
+    const role = dto.role || user?.role || "Staff";
 
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });

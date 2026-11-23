@@ -1,46 +1,53 @@
+import { prisma } from "../../core/database/prisma.js";
 import { RefreshTokenRecord } from "./auth.types.js";
 
 export class RefreshTokenRepository {
-  private tokens: Map<string, RefreshTokenRecord> = new Map();
-
-  async create(data: { userId: string; token: string; expiresAt: Date }): Promise<RefreshTokenRecord> {
-    const record: RefreshTokenRecord = {
-      id: `rt-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-      userId: data.userId,
-      token: data.token,
-      expiresAt: data.expiresAt,
-      revokedAt: null,
-      createdAt: new Date(),
-    };
-    this.tokens.set(data.token, record);
+  async create(data: {
+    userId: string;
+    token: string;
+    expiresAt: Date;
+  }): Promise<RefreshTokenRecord> {
+    const record = await prisma.refreshToken.create({
+      data: {
+        userId: data.userId,
+        token: data.token,
+        expiresAt: data.expiresAt,
+      },
+    });
     return record;
   }
 
   async findByToken(token: string): Promise<RefreshTokenRecord | null> {
-    return this.tokens.get(token) || null;
+    return prisma.refreshToken.findUnique({
+      where: { token },
+    });
   }
 
   async revokeToken(token: string): Promise<boolean> {
-    const record = this.tokens.get(token);
-    if (!record) return false;
-    record.revokedAt = new Date();
-    this.tokens.set(token, record);
-    return true;
+    try {
+      await prisma.refreshToken.update({
+        where: { token },
+        data: { revokedAt: new Date() },
+      });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async revokeAllForUser(userId: string): Promise<number> {
-    let count = 0;
-    for (const [key, record] of this.tokens.entries()) {
-      if (record.userId === userId && !record.revokedAt) {
-        record.revokedAt = new Date();
-        this.tokens.set(key, record);
-        count++;
-      }
-    }
-    return count;
+    const result = await prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    return result.count;
   }
 
-  async isTokenValid(token: string): Promise<{ valid: boolean; record: RefreshTokenRecord | null; reason?: string }> {
+  async isTokenValid(token: string): Promise<{
+    valid: boolean;
+    record: RefreshTokenRecord | null;
+    reason?: string;
+  }> {
     const record = await this.findByToken(token);
     if (!record) {
       return { valid: false, record: null, reason: "Token not found" };

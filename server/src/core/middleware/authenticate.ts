@@ -1,12 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { UnauthorizedError } from "../errors/app-error.js";
+import { UnauthorizedError, ForbiddenError } from "../errors/app-error.js";
 import { env } from "../../config/env.js";
+
+export type UserRole = "admin" | "staff" | "teacher" | "manager";
 
 export interface AuthPayload {
   userId: string;
   email: string;
-  role: "admin" | "staff" | "manager";
+  role: UserRole;
 }
 
 declare global {
@@ -39,7 +41,7 @@ export function authenticate(
   }
 }
 
-export function authorize(...allowedRoles: Array<"admin" | "staff" | "manager">) {
+export function authorize(...allowedRoles: Array<UserRole>) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) {
       next(new UnauthorizedError("Authentication required"));
@@ -47,7 +49,7 @@ export function authorize(...allowedRoles: Array<"admin" | "staff" | "manager">)
     }
 
     if (!allowedRoles.includes(req.user.role)) {
-      next(new UnauthorizedError("Insufficient permissions for this resource"));
+      next(new ForbiddenError("Insufficient permissions for this resource"));
       return;
     }
 

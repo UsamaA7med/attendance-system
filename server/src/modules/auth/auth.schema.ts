@@ -9,8 +9,7 @@ export const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Valid email required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  department: z.string().default("General"),
-  position: z.string().default("Staff"),
+  phone: z.string().optional(),
 });
 
 export const refreshTokenSchema = z.object({

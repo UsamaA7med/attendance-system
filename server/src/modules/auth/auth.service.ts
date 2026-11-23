@@ -63,8 +63,7 @@ export class AuthService {
       email: dto.email,
       passwordHash,
       role: "staff",
-      department: dto.department,
-      position: dto.position,
+      phone: dto.phone,
     });
 
     const tokens = await this.generateTokenPair({

@@ -1,11 +1,12 @@
+export type UserRole = "admin" | "staff" | "teacher" | "manager";
+
 export interface User {
   id: string;
   name: string;
   email: string;
   passwordHash: string;
-  role: "admin" | "staff" | "manager";
-  department: string;
-  position: string;
+  phone?: string | null;
+  role: UserRole;
   createdAt: string;
 }
 

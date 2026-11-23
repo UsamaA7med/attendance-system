@@ -29,8 +29,7 @@ export class UsersService {
       email: dto.email,
       passwordHash,
       role: dto.role,
-      department: dto.department,
-      position: dto.position,
+      phone: dto.phone,
     });
   }
 
