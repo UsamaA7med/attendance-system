@@ -1,28 +1,208 @@
-// use prisma-8
+// ============================================================================
+// Prisma Schema for Student Attendance System (Educational Center)
+// Database: PostgreSQL
+// ============================================================================
 
-model User {
-  id           String       @id @onCreate(uuid())
-  name         String
-  email        String       @unique
-  passwordHash String
-  role         String       @default("staff")
-  department   String       @default("General")
-  position     String       @default("Staff")
-  attendances  Attendance[]
-  createdAt    DateTime     @default(now()) @onCreate(now())
-  updatedAt    temporal.UpdatedAt
+generator client {
+  provider = "prisma-client-js"
 }
 
-model Attendance {
-  id              String             @id @onCreate(uuid())
-  userId          String
-  user            User               @relation(fields: [userId], references: [id])
-  date            String
-  checkIn         String
-  checkOut        String?
-  durationMinutes Int?
-  status          String             @default("present")
-  note            String?
-  createdAt       DateTime           @default(now()) @onCreate(now())
-  updatedAt       temporal.UpdatedAt
+datasource db {
+  provider = "postgresql"
+}
+
+// ----------------------------------------------------------------------------
+// ENUMS
+// ----------------------------------------------------------------------------
+
+/// System access roles:
+/// - ADMIN: Full control over center configuration, users, classes, and records.
+/// - STAFF: Student onboarding, class enrollments, and taking/correcting attendance.
+/// - TEACHER: Limited to their assigned classes and taking class attendance.
+enum Role {
+  ADMIN
+  STAFF
+  TEACHER
+}
+
+/// Status of student attendance for a given session.
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+/// Current status of a student's enrollment in a class.
+enum EnrollmentStatus {
+  ACTIVE
+  DROPPED
+}
+
+/// Days of the week for scheduling class sessions.
+enum DayOfWeek {
+  SATURDAY
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+}
+
+// ----------------------------------------------------------------------------
+// MODELS
+// ----------------------------------------------------------------------------
+
+/// User represents administrative, operational, and teaching staff.
+/// Authenticated accounts with role-based access control.
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  phone        String?
+  role         Role     @default(TEACHER)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  taughtClasses   Class[]             @relation("TeacherClasses")
+  createdSessions AttendanceSession[] @relation("SessionCreator")
+  markedRecords   AttendanceRecord[]  @relation("RecordMarker")
+
+  @@map("users")
+}
+
+/// Student represents a registered learner at the educational center.
+/// Holds contact info, guardian contact details, and activity state.
+model Student {
+  id             String   @id @default(cuid())
+  fullName       String   @map("full_name")
+  phone          String?
+  parentName     String   @map("parent_name")
+  parentPhone    String   @map("parent_phone")
+  notes          String?  @db.Text
+  isActive       Boolean  @default(true) @map("is_active")
+  enrollmentDate DateTime @default(now()) @map("enrollment_date")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  enrollments       Enrollment[]
+  attendanceRecords AttendanceRecord[]
+
+  @@index([fullName])
+  @@index([parentPhone])
+  @@map("students")
+}
+
+/// Class represents an educational course/group instructed by one teacher.
+/// Classes can have weekly recurring schedules and multiple enrolled students.
+model Class {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  room        String?
+  isActive    Boolean  @default(true) @map("is_active")
+  teacherId   String   @map("teacher_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  teacher            User                @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Restrict)
+  schedules          ClassSchedule[]
+  enrollments        Enrollment[]
+  attendanceSessions AttendanceSession[]
+
+  @@index([teacherId])
+  @@map("classes")
+}
+
+/// ClassSchedule defines weekly recurring time slots for a class.
+/// Deleted automatically if parent class is removed.
+model ClassSchedule {
+  id        String    @id @default(cuid())
+  classId   String    @map("class_id")
+  dayOfWeek DayOfWeek @map("day_of_week")
+  startTime String    @map("start_time") // Format: "HH:mm" (e.g. "14:00")
+  endTime   String    @map("end_time")   // Format: "HH:mm" (e.g. "15:30")
+  createdAt DateTime  @default(now())    @map("created_at")
+  updatedAt DateTime  @updatedAt         @map("updated_at")
+
+  // Relations
+  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@index([classId])
+  @@index([dayOfWeek])
+  @@map("class_schedules")
+}
+
+/// Enrollment connects Students to Classes (Many-to-Many junction).
+/// Tracks enrollment date and active/dropped status.
+model Enrollment {
+  id         String           @id @default(cuid())
+  studentId  String           @map("student_id")
+  classId    String           @map("class_id")
+  enrolledAt DateTime         @default(now()) @map("enrolled_at")
+  status     EnrollmentStatus @default(ACTIVE)
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt      @map("updated_at")
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class   Class   @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, classId])
+  @@index([studentId])
+  @@index([classId])
+  @@map("enrollments")
+}
+
+/// AttendanceSession represents an attendance event for a class on a specific date.
+/// Enforces at most one session per class per date.
+model AttendanceSession {
+  id          String   @id @default(cuid())
+  classId     String   @map("class_id")
+  date        DateTime @db.Date
+  createdById String   @map("created_by_id")
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt      @map("updated_at")
+
+  // Relations
+  class     Class              @relation(fields: [classId], references: [id], onDelete: Cascade)
+  createdBy User               @relation("SessionCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  records   AttendanceRecord[]
+
+  @@unique([classId, date])
+  @@index([classId, date])
+  @@index([createdById])
+  @@map("attendance_sessions")
+}
+
+/// AttendanceRecord stores the individual attendance outcome for a student in a session.
+/// Enforces one record per student per session, tracking who marked it and when.
+model AttendanceRecord {
+  id         String           @id @default(cuid())
+  sessionId  String           @map("session_id")
+  studentId  String           @map("student_id")
+  status     AttendanceStatus @default(PRESENT)
+  note       String?          @db.Text
+  markedById String           @map("marked_by_id")
+  markedAt   DateTime         @default(now()) @map("marked_at")
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt      @map("updated_at")
+
+  // Relations
+  session  AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student  Student           @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  markedBy User              @relation("RecordMarker", fields: [markedById], references: [id], onDelete: Restrict)
+
+  @@unique([sessionId, studentId])
+  @@index([studentId])
+  @@index([sessionId])
+  @@index([markedById])
+  @@map("attendance_records")
 }

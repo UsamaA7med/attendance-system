@@ -10,7 +10,11 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma skills sync || exit 0",
-    "contract:emit": "prisma contract emit"
+    "contract:emit": "prisma contract emit",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "keywords": [
     "express",
@@ -21,6 +25,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "@prisma/orm-postgres": "^8.0.0-rc.24",
     "bcryptjs": "^3.0.3",
@@ -36,6 +41,7 @@
   },
   "devDependencies": {
     "@prisma/cli-engine": "^0.10.0",
+    "@prisma/prisma7": "^7.10.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.8.1",
     "@types/cookie-parser": "^1.4.9",
@@ -44,6 +50,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
     "prisma": "^8.0.0-rc.34",
     "rimraf": "^6.1.2",
     "tsx": "^4.23.15",
