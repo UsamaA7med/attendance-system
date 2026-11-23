@@ -14,7 +14,9 @@ export function clearTokens(): void {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
 }
 
-const rawBaseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const rawBaseURL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? "/api" : "http://localhost:5000/api");
 const normalizedBaseURL = rawBaseURL.endsWith("/") ? rawBaseURL.slice(0, -1) : rawBaseURL;
 
 export const api = axios.create({

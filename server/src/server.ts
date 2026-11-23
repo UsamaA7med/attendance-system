@@ -34,3 +34,6 @@ process.on("uncaughtException", (error: Error) => {
   logger.error("Uncaught Exception thrown:", error);
   process.exit(1);
 });
+
+export default app;
+
