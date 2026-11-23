@@ -17,8 +17,13 @@ export function errorHandler(
 
   logger.error("Unhandled Exception:", err);
 
-  const message =
-    env.NODE_ENV === "production" ? "Internal server error" : err.message;
+  const isDbConfigError = err.message?.includes("DATABASE_URL");
+  const message = isDbConfigError
+    ? "Database connection configuration missing. Please verify DATABASE_URL in Vercel environment variables."
+    : env.NODE_ENV === "production"
+    ? "Internal server error"
+    : err.message;
+
   ApiResponse.error(
     res,
     message,
