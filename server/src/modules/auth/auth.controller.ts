@@ -7,20 +7,24 @@ import { env } from "../../config/env.js";
 const REFRESH_COOKIE_NAME = "refreshToken";
 
 function setRefreshCookie(res: Response, token: string): void {
+  const isProduction = env.NODE_ENV === "production";
+  const sameSite = (env.COOKIE_SAME_SITE || "lax") as "lax" | "strict" | "none";
   res.cookie(REFRESH_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: env.NODE_ENV === "production" ? "strict" : "lax",
+    secure: isProduction || sameSite === "none",
+    sameSite,
     path: "/api/auth",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
   });
 }
 
 function clearRefreshCookie(res: Response): void {
+  const isProduction = env.NODE_ENV === "production";
+  const sameSite = (env.COOKIE_SAME_SITE || "lax") as "lax" | "strict" | "none";
   res.clearCookie(REFRESH_COOKIE_NAME, {
     httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: env.NODE_ENV === "production" ? "strict" : "lax",
+    secure: isProduction || sameSite === "none",
+    sameSite,
     path: "/api/auth",
   });
 }

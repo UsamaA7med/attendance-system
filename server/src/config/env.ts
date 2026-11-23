@@ -14,6 +14,7 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().default("super-secret-jwt-attendance-refresh-key-2026"),
   JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
   DATABASE_URL: z.string().optional(),
+  COOKIE_SAME_SITE: z.enum(["lax", "strict", "none"]).optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -8,6 +8,10 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is not defined in environment variables");
 }
 
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+
 const adapter = new PrismaPg({ connectionString });
 
-export const prisma = new PrismaClient({ adapter });
+export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter });
+
+globalForPrisma.prisma = prisma;
