@@ -9,6 +9,10 @@ const envSchema = z.object({
   CLIENT_URL: z.string().default("http://localhost:5173"),
   JWT_SECRET: z.string().default("attendance-system-secret-key-2026"),
   JWT_EXPIRES_IN: z.string().default("7d"),
+  JWT_ACCESS_SECRET: z.string().default("super-secret-jwt-attendance-access-key-2026"),
+  JWT_ACCESS_EXPIRES_IN: z.string().default("15m"),
+  JWT_REFRESH_SECRET: z.string().default("super-secret-jwt-attendance-refresh-key-2026"),
+  JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
 });
 
 const parsed = envSchema.safeParse(process.env);

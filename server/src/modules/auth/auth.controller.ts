@@ -2,12 +2,44 @@ import { Request, Response, NextFunction } from "express";
 import { authService } from "./auth.service.js";
 import { ApiResponse } from "../../core/utils/api-response.js";
 import { usersService } from "../users/users.service.js";
+import { env } from "../../config/env.js";
+
+const REFRESH_COOKIE_NAME = "refreshToken";
+
+function setRefreshCookie(res: Response, token: string): void {
+  res.cookie(REFRESH_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: env.NODE_ENV === "production" ? "strict" : "lax",
+    path: "/api/auth",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+  });
+}
+
+function clearRefreshCookie(res: Response): void {
+  res.clearCookie(REFRESH_COOKIE_NAME, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: env.NODE_ENV === "production" ? "strict" : "lax",
+    path: "/api/auth",
+  });
+}
 
 export class AuthController {
   async login(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const result = await authService.login(req.body);
-      ApiResponse.success(res, result, "Logged in successfully");
+      setRefreshCookie(res, result.tokens.refreshToken);
+
+      ApiResponse.success(
+        res,
+        {
+          user: result.user,
+          accessToken: result.tokens.accessToken,
+          refreshToken: result.tokens.refreshToken,
+        },
+        "Logged in successfully"
+      );
     } catch (error) {
       next(error);
     }
@@ -16,7 +48,59 @@ export class AuthController {
   async register(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const result = await authService.register(req.body);
-      ApiResponse.created(res, result, "Account registered successfully");
+      setRefreshCookie(res, result.tokens.refreshToken);
+
+      ApiResponse.created(
+        res,
+        {
+          user: result.user,
+          accessToken: result.tokens.accessToken,
+          refreshToken: result.tokens.refreshToken,
+        },
+        "Account registered successfully"
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async refresh(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const token =
+        (req.cookies && req.cookies[REFRESH_COOKIE_NAME]) ||
+        req.body?.refreshToken;
+
+      if (!token) {
+        ApiResponse.error(res, "Refresh token is missing", 401);
+        return;
+      }
+
+      const tokens = await authService.refresh(token);
+      setRefreshCookie(res, tokens.refreshToken);
+
+      ApiResponse.success(
+        res,
+        {
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+        },
+        "Token refreshed successfully"
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const token =
+        (req.cookies && req.cookies[REFRESH_COOKIE_NAME]) ||
+        req.body?.refreshToken;
+
+      await authService.logout(token, req.user?.userId);
+      clearRefreshCookie(res);
+
+      ApiResponse.success(res, null, "Logged out successfully");
     } catch (error) {
       next(error);
     }

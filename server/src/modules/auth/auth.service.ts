@@ -1,13 +1,34 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { usersRepository } from "../users/users.repository.js";
+import { refreshTokenRepository } from "./refresh-token.repository.js";
 import { LoginDto, RegisterDto } from "./auth.schema.js";
+import { TokenPair } from "./auth.types.js";
 import { UnauthorizedError, ConflictError } from "../../core/errors/app-error.js";
 import { env } from "../../config/env.js";
 import { SafeUser } from "../users/users.types.js";
 
+function parseExpiryMs(expiry: string): number {
+  const match = expiry.match(/^(\d+)([smhd])$/);
+  if (!match) return 7 * 24 * 60 * 60 * 1000;
+  const val = parseInt(match[1], 10);
+  const unit = match[2];
+  switch (unit) {
+    case "s":
+      return val * 1000;
+    case "m":
+      return val * 60 * 1000;
+    case "h":
+      return val * 60 * 60 * 1000;
+    case "d":
+      return val * 24 * 60 * 60 * 1000;
+    default:
+      return 7 * 24 * 60 * 60 * 1000;
+  }
+}
+
 export class AuthService {
-  async login(dto: LoginDto): Promise<{ user: SafeUser; token: string }> {
+  async login(dto: LoginDto): Promise<{ user: SafeUser; tokens: TokenPair }> {
     const user = await usersRepository.findByEmail(dto.email);
     if (!user) {
       throw new UnauthorizedError("Invalid email or password");
@@ -18,7 +39,7 @@ export class AuthService {
       throw new UnauthorizedError("Invalid email or password");
     }
 
-    const token = this.generateToken({
+    const tokens = await this.generateTokenPair({
       userId: user.id,
       email: user.email,
       role: user.role,
@@ -26,11 +47,11 @@ export class AuthService {
 
     return {
       user: usersRepository.toSafeUser(user),
-      token,
+      tokens,
     };
   }
 
-  async register(dto: RegisterDto): Promise<{ user: SafeUser; token: string }> {
+  async register(dto: RegisterDto): Promise<{ user: SafeUser; tokens: TokenPair }> {
     const existing = await usersRepository.findByEmail(dto.email);
     if (existing) {
       throw new ConflictError("Email already registered");
@@ -46,19 +67,96 @@ export class AuthService {
       position: dto.position,
     });
 
-    const token = this.generateToken({
+    const tokens = await this.generateTokenPair({
       userId: user.id,
       email: user.email,
       role: user.role,
     });
 
-    return { user, token };
+    return { user, tokens };
   }
 
-  private generateToken(payload: { userId: string; email: string; role: string }): string {
-    return jwt.sign(payload, env.JWT_SECRET, {
-      expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions["expiresIn"],
+  async refresh(refreshToken: string): Promise<TokenPair> {
+    if (!refreshToken) {
+      throw new UnauthorizedError("Refresh token is required");
+    }
+
+    // 1. Verify token signature
+    let decoded: { userId: string; tokenType?: string };
+    try {
+      decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as {
+        userId: string;
+        tokenType?: string;
+      };
+    } catch {
+      throw new UnauthorizedError("Invalid or expired refresh token");
+    }
+
+    // 2. Validate token against repository (check expiry & revocation status)
+    const validation = await refreshTokenRepository.isTokenValid(refreshToken);
+    if (!validation.valid || !validation.record) {
+      // Possible token theft or replay attempt: revoke all sessions for this user
+      if (validation.record?.revokedAt) {
+        await refreshTokenRepository.revokeAllForUser(decoded.userId);
+        throw new UnauthorizedError(
+          "Refresh token reuse detected. All sessions invalidated. Please sign in again."
+        );
+      }
+      throw new UnauthorizedError(validation.reason || "Invalid refresh token");
+    }
+
+    // 3. Ensure user still exists and is active
+    const user = await usersRepository.findById(decoded.userId);
+    if (!user) {
+      throw new UnauthorizedError("User associated with this token no longer exists");
+    }
+
+    // 4. Token Rotation: revoke current token and generate a fresh pair
+    await refreshTokenRepository.revokeToken(refreshToken);
+
+    return this.generateTokenPair({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
     });
+  }
+
+  async logout(refreshToken?: string, userId?: string): Promise<void> {
+    if (refreshToken) {
+      await refreshTokenRepository.revokeToken(refreshToken);
+    }
+    if (userId) {
+      await refreshTokenRepository.revokeAllForUser(userId);
+    }
+  }
+
+  private async generateTokenPair(payload: {
+    userId: string;
+    email: string;
+    role: string;
+  }): Promise<TokenPair> {
+    const accessToken = jwt.sign(payload, env.JWT_ACCESS_SECRET, {
+      expiresIn: env.JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"],
+    });
+
+    const refreshToken = jwt.sign(
+      { userId: payload.userId, tokenType: "refresh" },
+      env.JWT_REFRESH_SECRET,
+      {
+        expiresIn: env.JWT_REFRESH_EXPIRES_IN as jwt.SignOptions["expiresIn"],
+      }
+    );
+
+    const expiryDurationMs = parseExpiryMs(env.JWT_REFRESH_EXPIRES_IN);
+    const expiresAt = new Date(Date.now() + expiryDurationMs);
+
+    await refreshTokenRepository.create({
+      userId: payload.userId,
+      token: refreshToken,
+      expiresAt,
+    });
+
+    return { accessToken, refreshToken };
   }
 }
 

@@ -13,5 +13,10 @@ export const registerSchema = z.object({
   position: z.string().default("Staff"),
 });
 
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().optional(),
+});
+
 export type LoginDto = z.infer<typeof loginSchema>;
 export type RegisterDto = z.infer<typeof registerSchema>;
+export type RefreshTokenDto = z.infer<typeof refreshTokenSchema>;

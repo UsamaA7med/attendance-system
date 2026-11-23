@@ -65,7 +65,11 @@ export function ApiStatus() {
               </div>
               <div>
                 <span className="text-neutral-500">Auth Interceptor: </span>
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">Active (Bearer Token)</span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">Active (Bearer Access Token)</span>
+              </div>
+              <div>
+                <span className="text-neutral-500">Refresh Flow: </span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">Automatic 401 Interceptor + httpOnly Cookie</span>
               </div>
             </div>
 

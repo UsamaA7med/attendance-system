@@ -71,8 +71,24 @@ model User {
   taughtClasses   Class[]             @relation("TeacherClasses")
   createdSessions AttendanceSession[] @relation("SessionCreator")
   markedRecords   AttendanceRecord[]  @relation("RecordMarker")
+  refreshTokens   RefreshToken[]
 
   @@map("users")
+}
+
+/// RefreshToken stores issued refresh tokens for session revocation and token rotation.
+model RefreshToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String    @map("user_id")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
 }
 
 /// Student represents a registered learner at the educational center.
