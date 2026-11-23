@@ -1,19 +1,14 @@
 import { useState } from "react";
 import { NavLink, useLocation, useNavigate, Outlet } from "react-router-dom";
-import { useAttendanceStore } from "@/store/useAttendanceStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   CalendarCheck,
   LayoutDashboard,
-  ListFilter,
-  Network,
+  GraduationCap,
   Menu,
   X,
-  Database,
-  ShieldCheck,
-  Clock,
   Sparkles,
   LogOut,
 } from "lucide-react";
@@ -27,8 +22,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { isCheckedIn, records } = useAttendanceStore();
   const { user, logout } = useAuthStore();
+  const isAdmin = user?.role?.toLowerCase() === "admin";
 
   const navItems = [
     {
@@ -37,28 +32,24 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: LayoutDashboard,
       badge: null,
     },
-    {
-      title: "Attendance Records",
-      path: "/records",
-      icon: ListFilter,
-      badge: `${records.length}`,
-    },
-    {
-      title: "Axios & API Status",
-      path: "/api-status",
-      icon: Network,
-      badge: "Live",
-    },
+    ...(isAdmin
+      ? [
+          {
+            title: "Teachers",
+            path: "/teachers",
+            icon: GraduationCap,
+            badge: null,
+          },
+        ]
+      : []),
   ];
 
   const getPageTitle = () => {
     switch (location.pathname) {
       case "/":
         return "Dashboard";
-      case "/records":
-        return "Attendance Records";
-      case "/api-status":
-        return "Axios & API Integration";
+      case "/teachers":
+        return "Teachers Management";
       default:
         return "Attendance Hub";
     }
@@ -67,9 +58,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const handleLogout = async () => {
     await logout();
     toast.success("Signed out successfully", {
-      description: "You have been logged out. Redirecting to registration.",
+      description: "You have been logged out. Redirecting to login.",
     });
-    navigate("/register", { replace: true });
+    navigate("/login", { replace: true });
   };
 
   const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
@@ -136,54 +127,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             })}
           </nav>
         </div>
-
-        {/* System & Access Badges */}
-        <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-900/60 space-y-2">
-          <div className="flex items-center justify-between text-xs font-medium">
-            <span className="text-neutral-500 flex items-center gap-1.5">
-              <Database className="h-3.5 w-3.5 text-emerald-500" />
-              Database
-            </span>
-            <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              PostgreSQL
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between text-xs font-medium">
-            <span className="text-neutral-500 flex items-center gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
-              Access State
-            </span>
-            <Badge variant="default" className="text-[10px] px-2 py-0 uppercase font-bold bg-emerald-600 hover:bg-emerald-600">
-              Authorized
-            </Badge>
-          </div>
-        </div>
       </div>
 
       {/* Sidebar Footer */}
       <div className="space-y-3 pt-4 border-t border-neutral-200 dark:border-neutral-800">
-        {/* Attendance Check-in Status */}
-        <div className="flex items-center justify-between rounded-lg bg-neutral-100 p-2.5 dark:bg-neutral-900">
-          <div className="flex items-center gap-2">
-            <div
-              className={`h-2.5 w-2.5 rounded-full ${
-                isCheckedIn ? "bg-emerald-500 animate-pulse" : "bg-neutral-400"
-              }`}
-            />
-            <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
-              {isCheckedIn ? "Checked In" : "Checked Out"}
-            </span>
-          </div>
-          <Badge
-            variant={isCheckedIn ? "default" : "secondary"}
-            className="text-[10px] px-2 py-0.5 font-bold uppercase tracking-wider"
-          >
-            {isCheckedIn ? "Active" : "Idle"}
-          </Badge>
-        </div>
-
         {/* User Card & Logout Button */}
         <div className="space-y-2">
           <div className="flex items-center gap-3 px-1 py-1">
@@ -195,7 +142,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 {user?.name || "Staff Member"}
               </p>
               <p className="truncate text-[11px] text-neutral-500 dark:text-neutral-400">
-                {user?.email || "staff@attendance.local"}
+                {user?.email || ""}
               </p>
             </div>
             {user?.role && (
@@ -241,13 +188,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <span>Attendance Hub</span>
           </div>
         </div>
-
-        <Badge
-          variant={isCheckedIn ? "default" : "secondary"}
-          className="text-[11px] font-semibold"
-        >
-          {isCheckedIn ? "● Checked In" : "○ Out"}
-        </Badge>
       </div>
 
       {/* Mobile Drawer Backdrop & Sidebar */}
@@ -285,25 +225,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <p className="text-xs text-neutral-500 dark:text-neutral-400">
               Attendance System Dashboard & Operational Controls
             </p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 font-medium">
-              <Clock className="h-3.5 w-3.5" />
-              <span>{new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</span>
-            </div>
-
-            <Badge
-              variant={isCheckedIn ? "default" : "secondary"}
-              className="px-3 py-1 text-xs font-semibold uppercase tracking-wider gap-1.5"
-            >
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  isCheckedIn ? "bg-emerald-400 animate-pulse" : "bg-neutral-400"
-                }`}
-              />
-              {isCheckedIn ? "Checked In" : "Checked Out"}
-            </Badge>
           </div>
         </header>
 

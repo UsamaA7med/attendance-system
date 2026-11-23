@@ -3,55 +3,6 @@ import { AttendanceRecord, CreateAttendanceData } from "./attendance.types.js";
 class AttendanceRepository {
   private records: Map<string, AttendanceRecord> = new Map();
 
-  constructor() {
-    this.seedDefaultRecords();
-  }
-
-  private seedDefaultRecords() {
-    const today = new Date().toISOString().split("T")[0];
-    const defaults: AttendanceRecord[] = [
-      {
-        id: "att-1",
-        userId: "usr-1",
-        employeeName: "Osama Admin",
-        department: "Engineering",
-        role: "Software Engineer",
-        date: today,
-        checkIn: "09:02 AM",
-        checkOut: "05:15 PM",
-        durationMinutes: 493,
-        status: "present",
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: "att-2",
-        userId: "usr-2",
-        employeeName: "Sarah Jenkins",
-        department: "Design",
-        role: "Product Designer",
-        date: today,
-        checkIn: "09:45 AM",
-        checkOut: "05:30 PM",
-        durationMinutes: 465,
-        status: "late",
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: "att-3",
-        userId: "usr-3",
-        employeeName: "Alex Rivera",
-        department: "DevOps",
-        role: "DevOps Engineer",
-        date: today,
-        checkIn: "08:55 AM",
-        status: "present",
-        createdAt: new Date().toISOString(),
-      },
-    ];
-
-    defaults.forEach((r) => this.records.set(r.id, r));
-  }
-
   async findAll(filters?: {
     userId?: string;
     date?: string;

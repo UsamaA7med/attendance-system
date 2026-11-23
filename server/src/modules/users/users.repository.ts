@@ -1,4 +1,3 @@
-import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
 import { prisma } from "../../core/database/prisma.js";
 import { User, CreateUserData, SafeUser, UserRole } from "./users.types.js";
@@ -36,53 +35,6 @@ function toDomainUser(prismaUser: {
 }
 
 class UsersRepository {
-  constructor() {
-    this.ensureDefaultUsers();
-  }
-
-  private async ensureDefaultUsers(): Promise<void> {
-    try {
-      const existing = await prisma.user.findUnique({
-        where: { email: "osama@attendance.local" },
-      });
-
-      if (!existing) {
-        const passwordHash = await bcrypt.hash("password123", 10);
-        await prisma.user.createMany({
-          data: [
-            {
-              name: "Osama Admin",
-              email: "osama@attendance.local",
-              passwordHash,
-              role: Role.ADMIN,
-              phone: "+201000000001",
-              isActive: true,
-            },
-            {
-              name: "Sarah Jenkins",
-              email: "sarah@attendance.local",
-              passwordHash,
-              role: Role.STAFF,
-              phone: "+201000000002",
-              isActive: true,
-            },
-            {
-              name: "Alex Rivera",
-              email: "alex@attendance.local",
-              passwordHash,
-              role: Role.STAFF,
-              phone: "+201000000003",
-              isActive: true,
-            },
-          ],
-          skipDuplicates: true,
-        });
-      }
-    } catch (_err) {
-      // In dev/test scenarios where database might connect lazily
-    }
-  }
-
   async findAll(): Promise<SafeUser[]> {
     const users = await prisma.user.findMany({
       orderBy: { createdAt: "desc" },

@@ -6,7 +6,11 @@ import { AttendanceQueryDto } from "./attendance.schema.js";
 export class AttendanceController {
   async checkIn(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userId = req.user?.userId || (req.body.userId as string) || "usr-1";
+      const userId = req.user?.userId || (req.body.userId as string);
+      if (!userId) {
+        ApiResponse.error(res, "User ID is required", 400);
+        return;
+      }
       const record = await attendanceService.checkIn(userId, req.body);
       ApiResponse.created(res, record, "Checked in successfully");
     } catch (error) {
@@ -16,7 +20,11 @@ export class AttendanceController {
 
   async checkOut(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userId = req.user?.userId || (req.body.userId as string) || "usr-1";
+      const userId = req.user?.userId || (req.body.userId as string);
+      if (!userId) {
+        ApiResponse.error(res, "User ID is required", 400);
+        return;
+      }
       const record = await attendanceService.checkOut(userId, req.body);
       ApiResponse.success(res, record, "Checked out successfully");
     } catch (error) {

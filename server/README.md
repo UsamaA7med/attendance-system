@@ -119,8 +119,3 @@ npm run build
 # Start production server
 npm start
 ```
-
-### Pre-seeded Demo Credentials
-- **Email**: `osama@attendance.local`
-- **Password**: `password123`
-- **Role**: `admin`

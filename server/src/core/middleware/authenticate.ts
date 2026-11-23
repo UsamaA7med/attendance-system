@@ -48,7 +48,10 @@ export function authorize(...allowedRoles: Array<UserRole>) {
       return;
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    const currentRole = (req.user.role as string)?.toLowerCase();
+    const normalizedAllowed = allowedRoles.map((r) => r.toLowerCase());
+
+    if (!normalizedAllowed.includes(currentRole)) {
       next(new ForbiddenError("Insufficient permissions for this resource"));
       return;
     }

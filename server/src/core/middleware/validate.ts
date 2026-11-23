@@ -14,11 +14,29 @@ export function validate(schema: {
       }
       if (schema.query) {
         const parsedQuery = await schema.query.parseAsync(req.query);
-        req.query = parsedQuery as typeof req.query;
+        try {
+          req.query = parsedQuery as typeof req.query;
+        } catch {
+          Object.defineProperty(req, "query", {
+            value: parsedQuery,
+            writable: true,
+            configurable: true,
+            enumerable: true,
+          });
+        }
       }
       if (schema.params) {
         const parsedParams = await schema.params.parseAsync(req.params);
-        req.params = parsedParams as typeof req.params;
+        try {
+          req.params = parsedParams as typeof req.params;
+        } catch {
+          Object.defineProperty(req, "params", {
+            value: parsedParams,
+            writable: true,
+            configurable: true,
+            enumerable: true,
+          });
+        }
       }
       next();
     } catch (error) {

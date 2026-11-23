@@ -22,31 +22,7 @@ interface AttendanceState {
 export const useAttendanceStore = create<AttendanceState>()(
   persist(
     (set) => ({
-      records: [
-        {
-          id: "rec-1",
-          employeeName: "Osama",
-          role: "Software Engineer",
-          checkIn: "09:02 AM",
-          checkOut: "05:15 PM",
-          status: "present",
-        },
-        {
-          id: "rec-2",
-          employeeName: "Sarah Jenkins",
-          role: "Product Designer",
-          checkIn: "09:45 AM",
-          checkOut: "05:30 PM",
-          status: "late",
-        },
-        {
-          id: "rec-3",
-          employeeName: "Alex Rivera",
-          role: "DevOps Engineer",
-          checkIn: "08:55 AM",
-          status: "present",
-        },
-      ],
+      records: [],
       isCheckedIn: false,
       lastCheckInTime: null,
       checkIn: (employeeName: string, role: string) => {

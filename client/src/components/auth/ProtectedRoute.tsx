@@ -5,8 +5,8 @@ export function ProtectedRoute() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   if (!isAuthenticated) {
-    // Unauthorized users cannot access protected pages and are directed to the register form
-    return <Navigate to="/register" replace />;
+    // Unauthorized users cannot access protected pages and are directed to the login page
+    return <Navigate to="/login" replace />;
   }
 
   return <Outlet />;
@@ -17,6 +17,21 @@ export function PublicRoute() {
 
   if (isAuthenticated) {
     // Already authenticated users trying to access login/register are directed to the dashboard
+    return <Navigate to="/" replace />;
+  }
+
+  return <Outlet />;
+}
+
+export function AdminRoute() {
+  const { isAuthenticated, user } = useAuthStore();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user?.role?.toLowerCase() !== "admin") {
+    // Restrict non-admin users from accessing admin routes
     return <Navigate to="/" replace />;
   }
 
