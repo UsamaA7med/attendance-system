@@ -8,13 +8,17 @@ import { Dashboard } from "@/pages/Dashboard";
 import { Register } from "@/pages/Register";
 import { Login } from "@/pages/Login";
 import { ProtectedRoute, PublicRoute, AdminRoute } from "@/components/auth/ProtectedRoute";
+import { GlobalLoadingIndicator } from "@/components/common/GlobalLoadingIndicator";
+import { LoadingSpinner } from "@/components/ui/spinner";
 
 const Teachers = lazy(() => import("@/pages/Teachers"));
+const Classes = lazy(() => import("@/pages/Classes"));
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <GlobalLoadingIndicator />
         <Toaster richColors position="top-right" />
         <Routes>
           {/* Public Auth Routes: Standalone pages, OUTSIDE DashboardLayout */}
@@ -31,15 +35,17 @@ export default function App() {
               {/* Admin Only Routes */}
               <Route element={<AdminRoute />}>
                 <Route
+                  path="/classes"
+                  element={
+                    <Suspense fallback={<LoadingSpinner fullPage size="lg" label="Loading classes & lectures..." />}>
+                      <Classes />
+                    </Suspense>
+                  }
+                />
+                <Route
                   path="/teachers"
                   element={
-                    <Suspense
-                      fallback={
-                        <div className="flex h-64 items-center justify-center">
-                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent dark:border-white" />
-                        </div>
-                      }
-                    >
+                    <Suspense fallback={<LoadingSpinner fullPage size="lg" label="Loading teachers..." />}>
                       <Teachers />
                     </Suspense>
                   }

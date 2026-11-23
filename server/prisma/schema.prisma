@@ -25,7 +25,7 @@ enum Role {
   TEACHER
 }
 
-/// Status of student attendance for a given session.
+/// Status of student attendance for a given lecture.
 enum AttendanceStatus {
   PRESENT
   ABSENT
@@ -37,17 +37,6 @@ enum AttendanceStatus {
 enum EnrollmentStatus {
   ACTIVE
   DROPPED
-}
-
-/// Days of the week for scheduling class sessions.
-enum DayOfWeek {
-  SATURDAY
-  SUNDAY
-  MONDAY
-  TUESDAY
-  WEDNESDAY
-  THURSDAY
-  FRIDAY
 }
 
 // ----------------------------------------------------------------------------
@@ -70,10 +59,10 @@ model User {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   // Relations
-  taughtClasses   Class[]             @relation("TeacherClasses")
-  createdSessions AttendanceSession[] @relation("SessionCreator")
-  markedRecords   AttendanceRecord[]  @relation("RecordMarker")
-  refreshTokens   RefreshToken[]
+  taughtClasses     Class[]        @relation("TeacherClasses")
+  createdLectures   Lecture[]      @relation("LectureCreator")
+  markedAttendances Attendance[]   @relation("AttendanceMarker")
+  refreshTokens     RefreshToken[]
 
   @@map("users")
 }
@@ -108,8 +97,8 @@ model Student {
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   // Relations
-  enrollments       Enrollment[]
-  attendanceRecords AttendanceRecord[]
+  enrollments Enrollment[]
+  attendances Attendance[]
 
   @@index([fullName])
   @@index([parentPhone])
@@ -117,7 +106,7 @@ model Student {
 }
 
 /// Class represents an educational course/group instructed by one teacher.
-/// Classes can have weekly recurring schedules and multiple enrolled students.
+/// Classes can have multiple scheduled lectures and multiple enrolled students.
 model Class {
   id          String   @id @default(cuid())
   name        String
@@ -129,32 +118,12 @@ model Class {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
-  teacher            User                @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Restrict)
-  schedules          ClassSchedule[]
-  enrollments        Enrollment[]
-  attendanceSessions AttendanceSession[]
+  teacher     User         @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Restrict)
+  lectures    Lecture[]
+  enrollments Enrollment[]
 
   @@index([teacherId])
   @@map("classes")
-}
-
-/// ClassSchedule defines weekly recurring time slots for a class.
-/// Deleted automatically if parent class is removed.
-model ClassSchedule {
-  id        String    @id @default(cuid())
-  classId   String    @map("class_id")
-  dayOfWeek DayOfWeek @map("day_of_week")
-  startTime String    @map("start_time") // Format: "HH:mm" (e.g. "14:00")
-  endTime   String    @map("end_time")   // Format: "HH:mm" (e.g. "15:30")
-  createdAt DateTime  @default(now())    @map("created_at")
-  updatedAt DateTime  @updatedAt         @map("updated_at")
-
-  // Relations
-  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
-
-  @@index([classId])
-  @@index([dayOfWeek])
-  @@map("class_schedules")
 }
 
 /// Enrollment connects Students to Classes (Many-to-Many junction).
@@ -178,49 +147,50 @@ model Enrollment {
   @@map("enrollments")
 }
 
-/// AttendanceSession represents an attendance event for a class on a specific date.
-/// Enforces at most one session per class per date.
-model AttendanceSession {
+/// Lecture represents a scheduled or held class lecture on a specific date and start time.
+/// Enforces at most one lecture per class at the exact date and start time.
+model Lecture {
   id          String   @id @default(cuid())
   classId     String   @map("class_id")
   date        DateTime @db.Date
-  createdById String   @map("created_by_id")
+  startTime   String   @map("start_time") // Format: "HH:mm" (e.g. "14:00")
   notes       String?  @db.Text
+  createdById String   @map("created_by_id")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt      @map("updated_at")
 
   // Relations
-  class     Class              @relation(fields: [classId], references: [id], onDelete: Cascade)
-  createdBy User               @relation("SessionCreator", fields: [createdById], references: [id], onDelete: Restrict)
-  records   AttendanceRecord[]
+  class       Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  createdBy   User         @relation("LectureCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  attendances Attendance[]
 
-  @@unique([classId, date])
+  @@unique([classId, date, startTime])
   @@index([classId, date])
   @@index([createdById])
-  @@map("attendance_sessions")
+  @@map("lectures")
 }
 
-/// AttendanceRecord stores the individual attendance outcome for a student in a session.
-/// Enforces one record per student per session, tracking who marked it and when.
-model AttendanceRecord {
+/// Attendance stores individual student roll-call records for a specific lecture.
+/// Enforces one record per student per lecture, tracking who marked it and when.
+model Attendance {
   id         String           @id @default(cuid())
-  sessionId  String           @map("session_id")
+  lectureId  String           @map("lecture_id")
   studentId  String           @map("student_id")
   status     AttendanceStatus @default(PRESENT)
   note       String?          @db.Text
-  markedById String           @map("marked_by_id")
+  markedById String?          @map("marked_by_id")
   markedAt   DateTime         @default(now()) @map("marked_at")
   createdAt  DateTime         @default(now()) @map("created_at")
   updatedAt  DateTime         @updatedAt      @map("updated_at")
 
   // Relations
-  session  AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  student  Student           @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  markedBy User              @relation("RecordMarker", fields: [markedById], references: [id], onDelete: Restrict)
+  lecture  Lecture @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+  student  Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  markedBy User?   @relation("AttendanceMarker", fields: [markedById], references: [id], onDelete: SetNull)
 
-  @@unique([sessionId, studentId])
+  @@unique([lectureId, studentId])
   @@index([studentId])
-  @@index([sessionId])
+  @@index([lectureId])
   @@index([markedById])
-  @@map("attendance_records")
+  @@map("attendances")
 }

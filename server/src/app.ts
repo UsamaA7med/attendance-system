@@ -14,6 +14,8 @@ import { ApiResponse } from "./core/utils/api-response.js";
 import { authRouter } from "./modules/auth/index.js";
 import { usersRouter } from "./modules/users/index.js";
 import { teachersRouter } from "./modules/teachers/index.js";
+import { classesRouter } from "./modules/classes/index.js";
+import { lecturesRouter } from "./modules/lectures/index.js";
 import { attendanceRouter } from "./modules/attendance/index.js";
 import { reportsRouter } from "./modules/reports/index.js";
 
@@ -56,7 +58,15 @@ export function createApp(): Express {
       {
         name: "Attendance System Modular Monolith API",
         version: "1.0.0",
-        features: ["auth", "users", "teachers", "attendance", "reports"],
+        features: [
+          "auth",
+          "users",
+          "teachers",
+          "classes",
+          "lectures",
+          "attendance",
+          "reports",
+        ],
       },
       "Welcome to the Attendance System API"
     );
@@ -66,6 +76,8 @@ export function createApp(): Express {
   app.use("/api/auth", authRouter);
   app.use("/api/users", usersRouter);
   app.use("/api/teachers", teachersRouter);
+  app.use("/api/classes", classesRouter);
+  app.use("/api/lectures", lecturesRouter);
   app.use("/api/attendance", attendanceRouter);
   app.use("/api/reports", reportsRouter);
 

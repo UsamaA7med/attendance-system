@@ -112,8 +112,8 @@ class TeachersRepository {
       where: { id },
       include: {
         taughtClasses: { select: { id: true, name: true } },
-        createdSessions: { select: { id: true }, take: 1 },
-        markedRecords: { select: { id: true }, take: 1 },
+        createdLectures: { select: { id: true }, take: 1 },
+        markedAttendances: { select: { id: true }, take: 1 },
       },
     });
   }

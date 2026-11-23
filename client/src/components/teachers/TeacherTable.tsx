@@ -1,9 +1,10 @@
 import React from "react";
 import type { Teacher } from "@/lib/teachers.api";
 import { TeacherTableRow } from "./TeacherTableRow";
+import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Plus, RefreshCw } from "lucide-react";
+import { GraduationCap, Plus } from "lucide-react";
 
 interface TeacherTableProps {
   teachers: Teacher[];
@@ -41,12 +42,7 @@ export const TeacherTable = React.memo(function TeacherTable({
             </thead>
             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-neutral-500">
-                    <RefreshCw className="h-5 w-5 animate-spin mx-auto text-neutral-400 mb-2" />
-                    Loading teachers from database...
-                  </td>
-                </tr>
+                <TableSkeletonRows columns={5} rows={5} hasAvatar={true} />
               ) : teachers.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-neutral-500">

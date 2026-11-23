@@ -16,6 +16,7 @@
   - **Database & Prisma Schema**: Completed & seeded (`admin`, `staff`, `teacher`, `classes`, `students`).
   - **Authentication & Security**: Completed (Dual-token JWT architecture with 15-minute access tokens and DB-persisted refresh token rotation; role-based access control for `ADMIN`, `STAFF`, `TEACHER`).
   - **Teachers Management (Admin Workflow)**: Completed (Full CRUD RESTful API `/api/teachers` with RBAC and referential constraint protection; Teachers tab & management UI in frontend with create, edit, delete modals, metrics, search, and status filters).
+  - **Classes & Lectures Management (Admin Workflow)**: Completed (Full CRUD RESTful APIs for `/api/classes` and `/api/lectures` with admin authorization guards, start time collision detection, and cascade integrity; Classes tab in frontend restricted to Admin with interactive class roster, lecture scheduling by date and unique start time, roll call modal, confirm alert delete workflows, global network indicator, and table skeleton loading states).
   - **Frontend Core & Auth Flow**: Completed (Register, Login, Protected Routes, Dashboard Layout, Zustand store).
   - **In Progress / Next Tasks**: Attendance session marking workflows, student onboarding & class enrollment UI, and reports module.
 
@@ -45,6 +46,8 @@ server/src/
 │   ├── auth/                # Controller, Service, Repository, Routes, Schema, Types
 │   ├── users/               # Controller, Service, Repository, Routes, Schema, Types
 │   ├── teachers/            # Controller, Service, Repository, Routes, Schema, Types
+│   ├── classes/             # Controller, Service, Repository, Routes, Schema, Types
+│   ├── lectures/            # Controller, Service, Repository, Routes, Schema, Types
 │   ├── attendance/          # Controller, Service, Repository, Routes, Schema, Types
 │   └── reports/             # Controller, Service, Routes
 ├── app.ts                   # Express application setup & middleware stack
@@ -99,18 +102,16 @@ client/src/
    - Has many: `enrollments` (`Enrollment`), `attendanceRecords` (`AttendanceRecord`).
 4. **Class (`classes`)**:
    - `id`, `name`, `description`, `room`, `isActive`, `teacherId` (`User` - Restrict delete).
-   - Has many: `schedules` (`ClassSchedule`), `enrollments` (`Enrollment`), `attendanceSessions` (`AttendanceSession`).
-5. **ClassSchedule (`class_schedules`)**:
-   - `id`, `classId` (`Class` - Cascade delete), `dayOfWeek` (Enum: `SATURDAY`..`FRIDAY`), `startTime`, `endTime`.
-6. **Enrollment (`enrollments`)**:
+   - Has many: `lectures` (`Lecture`), `enrollments` (`Enrollment`).
+5. **Enrollment (`enrollments`)**:
    - `studentId` (`Student` - Cascade delete), `classId` (`Class` - Cascade delete), `enrolledAt`, `status` (`ACTIVE` | `DROPPED`).
    - Unique compound key: `[studentId, classId]`.
-7. **AttendanceSession (`attendance_sessions`)**:
-   - `id`, `classId` (`Class` - Cascade delete), `date` (Date), `createdById` (`User` - Restrict delete), `notes`.
-   - Unique compound key: `[classId, date]`.
-8. **AttendanceRecord (`attendance_records`)**:
-   - `id`, `sessionId` (`AttendanceSession` - Cascade delete), `studentId` (`Student` - Restrict delete), `status` (`PRESENT` | `ABSENT` | `LATE` | `EXCUSED`), `markedById` (`User`), `note`, `markedAt`.
-   - Unique compound key: `[sessionId, studentId]`.
+6. **Lecture (`lectures`)**:
+   - `id`, `classId` (`Class` - Cascade delete), `date` (Date), `startTime` (String "HH:mm"), `createdById` (`User` - Restrict delete), `notes`.
+   - Unique compound key: `[classId, date, startTime]`.
+7. **Attendance (`attendances`)**:
+   - `id`, `lectureId` (`Lecture` - Cascade delete), `studentId` (`Student` - Restrict delete), `status` (`PRESENT` | `ABSENT` | `LATE` | `EXCUSED`), `markedById` (`User`), `note`, `markedAt`.
+   - Unique compound key: `[lectureId, studentId]`.
 
 ---
 

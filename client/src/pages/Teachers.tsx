@@ -12,14 +12,14 @@ import {
   type StatusFilterOption,
 } from "@/components/teachers";
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus } from "lucide-react";
 
 export function Teachers() {
   const { user } = useAuthStore();
   const isAdmin = user?.role?.toLowerCase() === "admin";
 
   // TanStack Query: Live Teacher Roster
-  const { data: teachers = [], isLoading, isFetching, refetch } = useTeachers(undefined, {
+  const { data: teachers = [], isLoading } = useTeachers(undefined, {
     enabled: isAdmin,
   });
 
@@ -94,17 +94,6 @@ export function Teachers() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="gap-1.5"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-
           <Button
             size="sm"
             onClick={handleOpenAdd}

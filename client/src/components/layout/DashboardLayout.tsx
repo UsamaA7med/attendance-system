@@ -7,6 +7,7 @@ import {
   CalendarCheck,
   LayoutDashboard,
   GraduationCap,
+  BookOpen,
   Menu,
   X,
   Sparkles,
@@ -35,6 +36,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     ...(isAdmin
       ? [
           {
+            title: "Classes",
+            path: "/classes",
+            icon: BookOpen,
+            badge: null,
+          },
+          {
             title: "Teachers",
             path: "/teachers",
             icon: GraduationCap,
@@ -48,6 +55,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     switch (location.pathname) {
       case "/":
         return "Dashboard";
+      case "/classes":
+        return "Classes & Lectures";
       case "/teachers":
         return "Teachers Management";
       default:

@@ -102,11 +102,11 @@ export class TeachersService {
     }
 
     if (
-      (rawUser.createdSessions && rawUser.createdSessions.length > 0) ||
-      (rawUser.markedRecords && rawUser.markedRecords.length > 0)
+      (rawUser.createdLectures && rawUser.createdLectures.length > 0) ||
+      (rawUser.markedAttendances && rawUser.markedAttendances.length > 0)
     ) {
       throw new ConflictError(
-        `Cannot delete teacher '${rawUser.name}' because attendance history or sessions are linked to this account. You can deactivate their account instead.`
+        `Cannot delete teacher '${rawUser.name}' because attendance history or lectures are linked to this account. You can deactivate their account instead.`
       );
     }
 

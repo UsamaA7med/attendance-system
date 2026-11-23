@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient, Role, DayOfWeek, EnrollmentStatus } from "@prisma/client";
+import { PrismaClient, Role, EnrollmentStatus, AttendanceStatus } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 
@@ -16,10 +16,9 @@ async function main() {
 
   // 1. Clean existing records in reverse dependency order
   console.log("🧹 Cleaning existing data...");
-  await prisma.attendanceRecord.deleteMany();
-  await prisma.attendanceSession.deleteMany();
+  await prisma.attendance.deleteMany();
+  await prisma.lecture.deleteMany();
   await prisma.enrollment.deleteMany();
-  await prisma.classSchedule.deleteMany();
   await prisma.class.deleteMany();
   await prisma.student.deleteMany();
   await prisma.user.deleteMany();
@@ -64,8 +63,8 @@ async function main() {
 
   console.log(` Created 3 users: Admin (${admin.email}), Staff (${staff.email}), Teacher (${teacher.email})`);
 
-  // 3. Create 2 Classes assigned to the Teacher with Schedules
-  console.log("🏫 Creating classes with recurring weekly schedules...");
+  // 3. Create 2 Classes assigned to Teacher
+  console.log("🏫 Creating classes...");
 
   const mathClass = await prisma.class.create({
     data: {
@@ -74,20 +73,6 @@ async function main() {
       room: "Room 101",
       teacherId: teacher.id,
       isActive: true,
-      schedules: {
-        create: [
-          {
-            dayOfWeek: DayOfWeek.SATURDAY,
-            startTime: "16:00",
-            endTime: "18:00",
-          },
-          {
-            dayOfWeek: DayOfWeek.TUESDAY,
-            startTime: "16:00",
-            endTime: "18:00",
-          },
-        ],
-      },
     },
   });
 
@@ -98,20 +83,6 @@ async function main() {
       room: "Lab 204",
       teacherId: teacher.id,
       isActive: true,
-      schedules: {
-        create: [
-          {
-            dayOfWeek: DayOfWeek.SUNDAY,
-            startTime: "17:00",
-            endTime: "19:00",
-          },
-          {
-            dayOfWeek: DayOfWeek.WEDNESDAY,
-            startTime: "17:00",
-            endTime: "19:00",
-          },
-        ],
-      },
     },
   });
 
@@ -172,18 +143,11 @@ async function main() {
   // 5. Enroll Students into Classes
   console.log("📝 Enrolling students into classes...");
 
-  // Enroll students 0, 1, 2 into Math Class
   await prisma.enrollment.createMany({
     data: [
       { studentId: students[0].id, classId: mathClass.id, status: EnrollmentStatus.ACTIVE },
       { studentId: students[1].id, classId: mathClass.id, status: EnrollmentStatus.ACTIVE },
       { studentId: students[2].id, classId: mathClass.id, status: EnrollmentStatus.ACTIVE },
-    ],
-  });
-
-  // Enroll students 1, 2, 3, 4 into Physics Class
-  await prisma.enrollment.createMany({
-    data: [
       { studentId: students[1].id, classId: physicsClass.id, status: EnrollmentStatus.ACTIVE },
       { studentId: students[2].id, classId: physicsClass.id, status: EnrollmentStatus.ACTIVE },
       { studentId: students[3].id, classId: physicsClass.id, status: EnrollmentStatus.ACTIVE },
@@ -192,6 +156,44 @@ async function main() {
   });
 
   console.log(" Enrolled students into respective classes.");
+
+  // 6. Create Lectures with Start Time & Attendance
+  console.log("📅 Creating initial lectures with attendance...");
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const mathLecture = await prisma.lecture.create({
+    data: {
+      classId: mathClass.id,
+      date: today,
+      startTime: "16:00",
+      notes: "Algebra: Quadratic Equations and Applications",
+      createdById: admin.id,
+      attendances: {
+        create: [
+          {
+            studentId: students[0].id,
+            status: AttendanceStatus.PRESENT,
+            markedById: teacher.id,
+          },
+          {
+            studentId: students[1].id,
+            status: AttendanceStatus.PRESENT,
+            markedById: teacher.id,
+          },
+          {
+            studentId: students[2].id,
+            status: AttendanceStatus.ABSENT,
+            note: "Excused absence - medical appointment",
+            markedById: teacher.id,
+          },
+        ],
+      },
+    },
+  });
+
+  console.log(` Created lecture for "${mathClass.name}" at 16:00 with initial attendance.`);
   console.log(" Seeding completed successfully!");
 }
 
