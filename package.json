@@ -3,9 +3,13 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "workspaces": [
+    "server",
+    "client"
+  ],
   "scripts": {
-    "build:server": "cd server && npm install && npm run build",
-    "build:client": "cd client && npm install && npm run build",
+    "build:server": "npm run build --workspace=server",
+    "build:client": "npm run build --workspace=client",
     "build": "npm run build:server && npm run build:client",
     "vercel-build": "npm run build"
   }
