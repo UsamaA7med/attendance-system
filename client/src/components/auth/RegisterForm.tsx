@@ -6,7 +6,6 @@ import { useAuthStore, type AuthUser } from "@/store/useAuthStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
     AlertCircle,
-    Loader2,
     Lock,
     Mail,
     User,
@@ -184,10 +183,7 @@ export const RegisterForm = React.memo(function RegisterForm({ onSuccess }: Regi
           className="w-full gap-2 font-semibold h-10 shadow-xs transition-all"
         >
           {isSubmitting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Creating Account...
-            </>
+            "Creating Account..."
           ) : (
             <>
               <UserPlus className="h-4 w-4" />

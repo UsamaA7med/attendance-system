@@ -2,7 +2,7 @@ import React from "react";
 import type { Teacher } from "@/lib/teachers.api";
 import { TeacherTableRow } from "./TeacherTableRow";
 import { TableSkeletonRows } from "@/components/ui/table-skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Plus } from "lucide-react";
 
@@ -25,19 +25,20 @@ export const TeacherTable = React.memo(function TeacherTable({
 }: TeacherTableProps) {
   return (
     <Card className="shadow-sm overflow-hidden">
-      <CardHeader className="bg-neutral-50/50 dark:bg-neutral-900/50 border-b border-neutral-100 dark:border-neutral-800 py-3">
-        <CardTitle className="text-base">Teachers Roster ({teachers.length})</CardTitle>
-      </CardHeader>
+      <div className="sm:hidden px-4 py-1.5 bg-neutral-50 dark:bg-neutral-900/60 border-b border-neutral-100 dark:border-neutral-800 text-[11px] text-neutral-500 dark:text-neutral-400 flex items-center justify-between">
+        <span>Swipe horizontally to view all details</span>
+        <span className="text-neutral-400 font-bold">⇄</span>
+      </div>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto overscroll-x-contain">
+          <table className="w-full min-w-[680px] text-left text-sm">
             <thead className="bg-neutral-100/50 dark:bg-neutral-900/50 text-neutral-600 dark:text-neutral-400 text-xs uppercase font-semibold border-b border-neutral-100 dark:border-neutral-800">
               <tr>
-                <th className="px-6 py-3.5">Teacher</th>
-                <th className="px-6 py-3.5">Department & Phone</th>
-                <th className="px-6 py-3.5">Assigned Classes</th>
-                <th className="px-6 py-3.5">Status</th>
-                <th className="px-6 py-3.5 text-right">Actions</th>
+                <th className="px-4 py-3 sm:px-6 sm:py-3.5 whitespace-nowrap">Teacher</th>
+                <th className="px-4 py-3 sm:px-6 sm:py-3.5 whitespace-nowrap">Department & Phone</th>
+                <th className="px-4 py-3 sm:px-6 sm:py-3.5 whitespace-nowrap">Assigned Classes</th>
+                <th className="px-4 py-3 sm:px-6 sm:py-3.5 whitespace-nowrap">Status</th>
+                <th className="px-4 py-3 sm:px-6 sm:py-3.5 text-right whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">

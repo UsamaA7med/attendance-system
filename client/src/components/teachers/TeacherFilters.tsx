@@ -35,11 +35,11 @@ export const TeacherFilters = React.memo(function TeacherFilters({
         />
       </div>
 
-      <div className="flex items-center gap-1.5 self-start sm:self-auto bg-neutral-100 dark:bg-neutral-900 p-1 rounded-lg border border-neutral-200 dark:border-neutral-800 text-xs">
+      <div className="flex items-center gap-1.5 overflow-x-auto max-w-full self-start sm:self-auto bg-neutral-100 dark:bg-neutral-900 p-1 rounded-lg border border-neutral-200 dark:border-neutral-800 text-xs">
         <button
           type="button"
           onClick={() => onStatusFilterChange("all")}
-          className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+          className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors ${
             statusFilter === "all"
               ? "bg-white text-neutral-900 shadow-sm dark:bg-neutral-800 dark:text-neutral-50"
               : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
@@ -50,7 +50,7 @@ export const TeacherFilters = React.memo(function TeacherFilters({
         <button
           type="button"
           onClick={() => onStatusFilterChange("active")}
-          className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+          className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors ${
             statusFilter === "active"
               ? "bg-white text-neutral-900 shadow-sm dark:bg-neutral-800 dark:text-neutral-50"
               : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
@@ -61,7 +61,7 @@ export const TeacherFilters = React.memo(function TeacherFilters({
         <button
           type="button"
           onClick={() => onStatusFilterChange("inactive")}
-          className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+          className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition-colors ${
             statusFilter === "inactive"
               ? "bg-white text-neutral-900 shadow-sm dark:bg-neutral-800 dark:text-neutral-50"
               : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"

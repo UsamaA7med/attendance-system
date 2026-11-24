@@ -6,7 +6,6 @@ import { useAuthStore, type AuthUser } from "@/store/useAuthStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertCircle,
-  Loader2,
   Lock,
   LogIn,
   Mail,
@@ -123,10 +122,7 @@ export const LoginForm = React.memo(function LoginForm() {
           className="w-full gap-2 font-semibold h-10 shadow-xs transition-all"
         >
           {isSubmitting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Signing In...
-            </>
+            "Signing In..."
           ) : (
             <>
               <LogIn className="h-4 w-4" />

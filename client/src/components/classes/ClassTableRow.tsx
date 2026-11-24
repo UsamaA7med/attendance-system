@@ -1,13 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DeleteIconButton } from "@/components/common";
 import type { ClassItem } from "@/lib/classes.api";
 import {
   BookOpen,
   CalendarDays,
-  Clock,
+  CalendarPlus,
   Edit,
   MapPin,
-  Trash2,
   Users,
 } from "lucide-react";
 import React from "react";
@@ -28,7 +28,7 @@ export const ClassTableRow = React.memo(function ClassTableRow({
   return (
     <tr className="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/50 transition-colors">
       {/* Class Name & Room */}
-      <td className="px-6 py-4">
+      <td className="px-4 py-3.5 sm:px-6 sm:py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-bold text-xs shadow-sm">
             <BookOpen className="h-5 w-5" />
@@ -57,7 +57,7 @@ export const ClassTableRow = React.memo(function ClassTableRow({
       </td>
 
       {/* Assigned Teacher */}
-      <td className="px-6 py-4 text-xs">
+      <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-xs whitespace-nowrap">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 font-bold text-[11px]">
             {cls.teacher?.name ? cls.teacher.name.charAt(0) : "T"}
@@ -74,7 +74,7 @@ export const ClassTableRow = React.memo(function ClassTableRow({
       </td>
 
       {/* Enrollments & Scheduled Lectures */}
-      <td className="px-6 py-4 text-xs">
+      <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-xs whitespace-nowrap">
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 text-neutral-700 dark:text-neutral-300">
             <Users className="h-3.5 w-3.5 text-neutral-400" />
@@ -92,7 +92,7 @@ export const ClassTableRow = React.memo(function ClassTableRow({
       </td>
 
       {/* Status */}
-      <td className="px-6 py-4">
+      <td className="px-4 py-3.5 sm:px-6 sm:py-4 whitespace-nowrap">
         {cls.isActive ? (
           <Badge
             variant="default"
@@ -113,17 +113,17 @@ export const ClassTableRow = React.memo(function ClassTableRow({
       </td>
 
       {/* Quick Actions */}
-      <td className="px-6 py-4 text-right">
+      <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-right whitespace-nowrap">
         <div className="flex items-center justify-end gap-1.5">
           <Button
             size="sm"
             variant="outline"
-            className="h-8 px-2.5 text-xs gap-1"
+            className="h-8 px-2.5 text-xs gap-1.5 font-medium border-neutral-200 bg-white hover:bg-neutral-50 hover:text-neutral-900 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900 shadow-xs transition-colors"
             onClick={() => onAddLecture(cls)}
-            title="Schedule a lecture for this class"
+            title={`Schedule a lecture for ${cls.name}`}
           >
-            <Clock className="h-3.5 w-3.5 text-neutral-500" />
-            <span>+Lecture</span>
+            <CalendarPlus className="h-3.5 w-3.5 text-neutral-600 dark:text-neutral-400" />
+            <span>Add Lecture</span>
           </Button>
 
           <Button
@@ -136,15 +136,10 @@ export const ClassTableRow = React.memo(function ClassTableRow({
             <Edit className="h-4 w-4" />
           </Button>
 
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 w-8 p-0 text-neutral-500 hover:text-rose-600 dark:hover:text-rose-400"
+          <DeleteIconButton
             onClick={() => onDelete(cls)}
             title="Delete class"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          />
         </div>
       </td>
     </tr>

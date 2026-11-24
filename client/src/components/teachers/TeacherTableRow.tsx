@@ -2,13 +2,13 @@ import React from "react";
 import type { Teacher } from "@/lib/teachers.api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DeleteIconButton } from "@/components/common";
 import {
   Mail,
   Building,
   Phone,
   BookOpen,
   Edit,
-  Trash2,
 } from "lucide-react";
 
 interface TeacherTableRowProps {
@@ -25,7 +25,7 @@ export const TeacherTableRow = React.memo(function TeacherTableRow({
   return (
     <tr className="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/50 transition-colors">
       {/* Teacher Info */}
-      <td className="px-6 py-4">
+      <td className="px-4 py-3.5 sm:px-6 sm:py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-bold text-xs uppercase shadow-sm">
             {teacher.name.charAt(0)}
@@ -43,7 +43,7 @@ export const TeacherTableRow = React.memo(function TeacherTableRow({
       </td>
 
       {/* Department & Phone */}
-      <td className="px-6 py-4 text-xs">
+      <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-xs whitespace-nowrap">
         <div className="space-y-1">
           <span className="inline-flex items-center gap-1 font-medium text-neutral-800 dark:text-neutral-200">
             <Building className="h-3 w-3 text-neutral-400" />
@@ -61,7 +61,7 @@ export const TeacherTableRow = React.memo(function TeacherTableRow({
       </td>
 
       {/* Classes Taught */}
-      <td className="px-6 py-4">
+      <td className="px-4 py-3.5 sm:px-6 sm:py-4">
         {teacher.classes && teacher.classes.length > 0 ? (
           <div className="flex flex-wrap gap-1.5 max-w-xs">
             {teacher.classes.map((cls) => (
@@ -76,12 +76,12 @@ export const TeacherTableRow = React.memo(function TeacherTableRow({
             ))}
           </div>
         ) : (
-          <span className="text-xs text-neutral-400 italic">No classes assigned</span>
+          <span className="text-xs text-neutral-400 italic whitespace-nowrap">No classes assigned</span>
         )}
       </td>
 
       {/* Status */}
-      <td className="px-6 py-4">
+      <td className="px-4 py-3.5 sm:px-6 sm:py-4 whitespace-nowrap">
         {teacher.isActive ? (
           <Badge
             variant="default"
@@ -102,7 +102,7 @@ export const TeacherTableRow = React.memo(function TeacherTableRow({
       </td>
 
       {/* Actions */}
-      <td className="px-6 py-4 text-right">
+      <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-right whitespace-nowrap">
         <div className="flex items-center justify-end gap-1.5">
           <Button
             variant="ghost"
@@ -113,15 +113,10 @@ export const TeacherTableRow = React.memo(function TeacherTableRow({
           >
             <Edit className="h-3.5 w-3.5" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
+          <DeleteIconButton
             onClick={() => onDelete(teacher)}
             title="Delete teacher"
-            className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/30"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+          />
         </div>
       </td>
     </tr>

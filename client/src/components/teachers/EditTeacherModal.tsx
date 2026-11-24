@@ -6,7 +6,7 @@ import { useUpdateTeacher } from "@/hooks/useTeachers";
 import type { Teacher, UpdateTeacherPayload } from "@/lib/teachers.api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Edit, RefreshCw, X } from "lucide-react";
+import { Edit, X } from "lucide-react";
 
 const updateTeacherFormSchema = z.object({
   name: z.string().trim().min(2, "Full name must be at least 2 characters"),
@@ -181,14 +181,7 @@ export function EditTeacherModal({ teacher, onClose }: EditTeacherModalProps) {
               disabled={isSubmitting || updateMutation.isPending}
               className="gap-1.5"
             >
-              {isSubmitting || updateMutation.isPending ? (
-                <>
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Changes"
-              )}
+              {isSubmitting || updateMutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </form>

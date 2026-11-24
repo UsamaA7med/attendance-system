@@ -5,7 +5,7 @@ import { useCreateTeacher } from "@/hooks/useTeachers";
 import type { CreateTeacherPayload } from "@/lib/teachers.api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GraduationCap, RefreshCw, X } from "lucide-react";
+import { GraduationCap, X } from "lucide-react";
 
 const createTeacherFormSchema = z.object({
   name: z.string().trim().min(2, "Full name must be at least 2 characters"),
@@ -189,14 +189,7 @@ export function CreateTeacherModal({ isOpen, onClose }: CreateTeacherModalProps)
               disabled={isSubmitting || createMutation.isPending}
               className="gap-1.5"
             >
-              {isSubmitting || createMutation.isPending ? (
-                <>
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                "Create Teacher"
-              )}
+              {isSubmitting || createMutation.isPending ? "Creating..." : "Create Teacher"}
             </Button>
           </div>
         </form>

@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { useCreateClass } from "@/hooks/useClasses";
 import type { Teacher } from "@/lib/teachers.api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, BookOpen, RefreshCw, X } from "lucide-react";
+import { AlertCircle, BookOpen, X } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -225,14 +225,7 @@ export function CreateClassModal({ isOpen, onClose, teachers }: CreateClassModal
               disabled={isSubmitting || teachers.length === 0}
               className="gap-1.5"
             >
-              {isSubmitting ? (
-                <>
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                  Creating Class...
-                </>
-              ) : (
-                "Create Class"
-              )}
+              {isSubmitting ? "Creating Class..." : "Create Class"}
             </Button>
           </div>
         </form>

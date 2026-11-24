@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { DeleteIconButton } from "@/components/common";
 import { useDeleteLecture, useLectures } from "@/hooks/useLectures";
 import type { LectureItem } from "@/lib/lectures.api";
 import {
@@ -8,7 +9,6 @@ import {
   CheckCircle2,
   Clock,
   Plus,
-  Trash2,
   UserCheck,
   XCircle,
 } from "lucide-react";
@@ -50,33 +50,21 @@ export const LecturesTable = React.memo(function LecturesTable({
 
   return (
     <Card className="shadow-xs overflow-hidden">
-      <CardHeader className="bg-neutral-50/50 dark:bg-neutral-900/50 border-b border-neutral-100 dark:border-neutral-800 py-3 flex flex-row items-center justify-between">
-        <CardTitle className="text-base flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
-          <span>Scheduled Lectures ({lectures.length})</span>
-        </CardTitle>
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            className="h-8 text-xs gap-1.5 shadow-xs"
-            onClick={() => onOpenCreateLecture()}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            New Lecture
-          </Button>
-        </div>
-      </CardHeader>
+      <div className="sm:hidden px-4 py-1.5 bg-neutral-50 dark:bg-neutral-900/60 border-b border-neutral-100 dark:border-neutral-800 text-[11px] text-neutral-500 dark:text-neutral-400 flex items-center justify-between">
+        <span>Swipe horizontally to view all details</span>
+        <span className="text-neutral-400 font-bold">⇄</span>
+      </div>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto overscroll-x-contain">
+          <table className="w-full min-w-[800px] text-left text-sm">
             <thead className="bg-neutral-100/50 dark:bg-neutral-900/50 text-neutral-600 dark:text-neutral-400 text-xs uppercase font-semibold border-b border-neutral-100 dark:border-neutral-800">
               <tr>
-                <th className="px-6 py-3.5">Date & Time</th>
-                <th className="px-6 py-3.5">Class & Room</th>
-                <th className="px-6 py-3.5">Teacher</th>
-                <th className="px-6 py-3.5">Roll Call Status</th>
-                <th className="px-6 py-3.5">Notes</th>
-                <th className="px-6 py-3.5 text-right">Actions</th>
+                <th className="px-4 py-3 sm:px-6 sm:py-3.5 whitespace-nowrap">Date & Time</th>
+                <th className="px-4 py-3 sm:px-6 sm:py-3.5 whitespace-nowrap">Class & Room</th>
+                <th className="px-4 py-3 sm:px-6 sm:py-3.5 whitespace-nowrap">Teacher</th>
+                <th className="px-4 py-3 sm:px-6 sm:py-3.5 whitespace-nowrap">Roll Call Status</th>
+                <th className="px-4 py-3 sm:px-6 sm:py-3.5 whitespace-nowrap">Notes</th>
+                <th className="px-4 py-3 sm:px-6 sm:py-3.5 text-right whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -111,7 +99,7 @@ export const LecturesTable = React.memo(function LecturesTable({
                       className="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/50 transition-colors"
                     >
                       {/* Date & Start Time */}
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3.5 sm:px-6 sm:py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2.5">
                           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 font-bold">
                             <Clock className="h-4 w-4" />
@@ -128,7 +116,7 @@ export const LecturesTable = React.memo(function LecturesTable({
                       </td>
 
                       {/* Class & Room */}
-                      <td className="px-6 py-4 text-xs">
+                      <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-xs whitespace-nowrap">
                         <div className="font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5">
                           <BookOpen className="h-3.5 w-3.5 text-neutral-400" />
                           <span>{lecture.class.name}</span>
@@ -141,12 +129,12 @@ export const LecturesTable = React.memo(function LecturesTable({
                       </td>
 
                       {/* Assigned Teacher */}
-                      <td className="px-6 py-4 text-xs text-neutral-700 dark:text-neutral-300">
+                      <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-xs text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
                         {lecture.class.teacher?.name || "Instructor"}
                       </td>
 
                       {/* Attendance Summary */}
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3.5 sm:px-6 sm:py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/50 dark:bg-emerald-950/40 dark:text-emerald-300">
                             <CheckCircle2 className="h-3 w-3" />
@@ -171,12 +159,12 @@ export const LecturesTable = React.memo(function LecturesTable({
                       </td>
 
                       {/* Notes */}
-                      <td className="px-6 py-4 text-xs text-neutral-500 max-w-xs truncate">
+                      <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-xs text-neutral-500 max-w-xs truncate">
                         {lecture.notes || <span className="italic text-neutral-400">None</span>}
                       </td>
 
                       {/* Actions */}
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
                           <Button
                             size="sm"
@@ -187,16 +175,11 @@ export const LecturesTable = React.memo(function LecturesTable({
                             <UserCheck className="h-3.5 w-3.5" />
                             <span>Roll Call</span>
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 text-neutral-400 hover:text-rose-600"
+                          <DeleteIconButton
                             onClick={() => handleOpenDelete(lecture)}
                             disabled={deleteMutation.isPending && deletingLecture?.id === lecture.id}
                             title="Delete lecture"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          />
                         </div>
                       </td>
                     </tr>

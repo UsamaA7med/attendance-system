@@ -31,7 +31,7 @@ export const TableSkeletonRows = React.memo(function TableSkeletonRows({
             // First Column: Avatar/Icon + Title & Subtitle
             if (colIndex === 0 && hasAvatar) {
               return (
-                <td key={colIndex} className="px-6 py-4">
+                <td key={colIndex} className="px-4 py-3.5 sm:px-6 sm:py-4">
                   <div className="flex items-center gap-3">
                     <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
                     <div className="space-y-2 min-w-0 flex-1">
@@ -46,7 +46,7 @@ export const TableSkeletonRows = React.memo(function TableSkeletonRows({
             // Last Column: Action Buttons aligned right
             if (colIndex === columns - 1 && hasActions) {
               return (
-                <td key={colIndex} className="px-6 py-4 text-right">
+                <td key={colIndex} className="px-4 py-3.5 sm:px-6 sm:py-4 text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <Skeleton className="h-8 w-16 rounded-lg" />
                     <Skeleton className="h-8 w-8 rounded-lg" />
@@ -58,7 +58,7 @@ export const TableSkeletonRows = React.memo(function TableSkeletonRows({
             // Status Badge column (usually second-to-last or middle)
             if (colIndex === columns - 2) {
               return (
-                <td key={colIndex} className="px-6 py-4">
+                <td key={colIndex} className="px-4 py-3.5 sm:px-6 sm:py-4">
                   <Skeleton className="h-5 w-16 rounded-full" />
                 </td>
               );
@@ -66,7 +66,7 @@ export const TableSkeletonRows = React.memo(function TableSkeletonRows({
 
             // Standard Data Columns (date, department, enrollments, etc.)
             return (
-              <td key={colIndex} className="px-6 py-4">
+              <td key={colIndex} className="px-4 py-3.5 sm:px-6 sm:py-4">
                 <div className="space-y-1.5">
                   <Skeleton
                     className={cn(

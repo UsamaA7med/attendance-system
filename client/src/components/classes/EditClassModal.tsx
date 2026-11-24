@@ -4,7 +4,7 @@ import { useUpdateClass } from "@/hooks/useClasses";
 import type { ClassItem } from "@/lib/classes.api";
 import type { Teacher } from "@/lib/teachers.api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BookOpen, RefreshCw, X } from "lucide-react";
+import { BookOpen, X } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -197,14 +197,7 @@ export function EditClassModal({ cls, onClose, teachers }: EditClassModalProps) 
               Cancel
             </Button>
             <Button type="submit" size="sm" disabled={isSubmitting} className="gap-1.5">
-              {isSubmitting ? (
-                <>
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                  Saving Changes...
-                </>
-              ) : (
-                "Save Changes"
-              )}
+              {isSubmitting ? "Saving Changes..." : "Save Changes"}
             </Button>
           </div>
         </form>

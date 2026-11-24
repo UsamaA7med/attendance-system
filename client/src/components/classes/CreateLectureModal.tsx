@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { useCreateLecture } from "@/hooks/useLectures";
 import type { ClassItem } from "@/lib/classes.api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays, Clock, RefreshCw, Users, X } from "lucide-react";
+import { CalendarDays, Clock, Users, X } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -222,14 +222,7 @@ export function CreateLectureModal({
               disabled={isSubmitting || classes.length === 0}
               className="gap-1.5"
             >
-              {isSubmitting ? (
-                <>
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                  Scheduling...
-                </>
-              ) : (
-                "Create Lecture"
-              )}
+              {isSubmitting ? "Scheduling..." : "Create Lecture"}
             </Button>
           </div>
         </form>

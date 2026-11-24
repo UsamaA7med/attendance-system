@@ -100,21 +100,9 @@ export function Classes() {
   const handleEditClass = useCallback((cls: ClassItem) => setEditingClass(cls), []);
   const handleCloseEditClass = useCallback(() => setEditingClass(null), []);
 
-  const handleDeleteClass = useCallback(
-    async (cls: ClassItem) => {
-      const confirmed = window.confirm(
-        `Are you sure you want to delete class "${cls.name}"?\n\nThis will permanently delete the class along with all scheduled lectures and student attendance records.`
-      );
-      if (!confirmed) return;
-
-      try {
-        await deleteMutation.mutateAsync(cls.id);
-      } catch {
-        // Handled in mutation onError toast
-      }
-    },
-    [deleteMutation]
-  );
+  const handleDeleteClass = useCallback((cls: ClassItem) => {
+    setDeletingClass(cls);
+  }, []);
   const handleCloseDeleteClass = useCallback(() => setDeletingClass(null), []);
 
   const handleConfirmDeleteClass = useCallback(async () => {
@@ -204,7 +192,7 @@ export function Classes() {
           }`}
         >
           <BookOpen className="h-3.5 w-3.5" />
-          <span>Classes Roster ({classes.length})</span>
+          <span>Classes ({classes.length})</span>
         </button>
 
         <button

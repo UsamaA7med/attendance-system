@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   useLectureAttendance,
   useUpdateLectureAttendance,
@@ -9,7 +10,6 @@ import {
   CheckCircle2,
   Clock,
   HelpCircle,
-  RefreshCw,
   UserCheck,
   X,
   XCircle,
@@ -33,7 +33,7 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
   isOpen,
   onClose,
 }: TakeAttendanceModalProps) {
-  const { data, isLoading, refetch } = useLectureAttendance(lectureId || "", {
+  const { data, isLoading } = useLectureAttendance(lectureId || "", {
     enabled: isOpen && Boolean(lectureId),
   });
 
@@ -190,9 +190,24 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
         {/* Students Roll Call List */}
         <div className="flex-1 overflow-y-auto p-6 space-y-3">
           {isLoading ? (
-            <div className="py-12 text-center text-neutral-500 text-xs">
-              <RefreshCw className="h-5 w-5 animate-spin mx-auto text-neutral-400 mb-2" />
-              Loading student roster...
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border border-neutral-100 bg-neutral-50/50 dark:border-neutral-800/80 dark:bg-neutral-900/30"
+                >
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-3.5 w-32" />
+                    <Skeleton className="h-2.5 w-24 opacity-70" />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Skeleton className="h-7 w-16 rounded-md" />
+                    <Skeleton className="h-7 w-16 rounded-md" />
+                    <Skeleton className="h-7 w-14 rounded-md" />
+                    <Skeleton className="h-7 w-16 rounded-md" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : students.length === 0 ? (
             <div className="py-12 text-center text-neutral-400 text-xs italic">
@@ -278,46 +293,25 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-4 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40">
+        <div className="flex items-center justify-end gap-2 p-4 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/40">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => refetch()}
-            disabled={isLoading}
-            className="text-xs gap-1"
+            onClick={onClose}
+            disabled={updateMutation.isPending}
           >
-            <RefreshCw className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`} />
-            Reload
+            Cancel
           </Button>
-
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onClose}
-              disabled={updateMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleSave}
-              disabled={updateMutation.isPending || students.length === 0}
-              className="gap-1.5"
-            >
-              {updateMutation.isPending ? (
-                <>
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Attendance"
-              )}
-            </Button>
-          </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleSave}
+            disabled={updateMutation.isPending || students.length === 0}
+            className="gap-1.5"
+          >
+            {updateMutation.isPending ? "Saving..." : "Save Attendance"}
+          </Button>
         </div>
       </div>
     </div>

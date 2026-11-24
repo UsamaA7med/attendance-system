@@ -17,6 +17,7 @@
   - **Authentication & Security**: Completed (Dual-token JWT architecture with 15-minute access tokens and DB-persisted refresh token rotation; role-based access control for `ADMIN`, `STAFF`, `TEACHER`).
   - **Teachers Management (Admin Workflow)**: Completed (Full CRUD RESTful API `/api/teachers` with RBAC and referential constraint protection; Teachers tab & management UI in frontend with create, edit, delete modals, metrics, search, and status filters).
   - **Classes & Lectures Management (Admin Workflow)**: Completed (Full CRUD RESTful APIs for `/api/classes` and `/api/lectures` with admin authorization guards, start time collision detection, and cascade integrity; Classes tab in frontend restricted to Admin with interactive class roster, lecture scheduling by date and unique start time, roll call modal, confirm alert delete workflows, global network indicator, and table skeleton loading states).
+  - **UI/UX Refinements & Unified Deletion**: Completed (Shared `ConfirmDeleteModal` and `DeleteIconButton` with unified rose color palette; responsive table layouts with horizontal scrolling and mobile swipe hints; spinner-free disabled action button states; skeleton roll call loading in `TakeAttendanceModal`; expanded main content layout to 1600px).
   - **Frontend Core & Auth Flow**: Completed (Register, Login, Protected Routes, Dashboard Layout, Zustand store).
   - **Vercel Cloud Deployment Setup**: Completed (Unified monorepo configuration with root `vercel.json` and `api/index.js` serverless handler, standalone `client/vercel.json` for SPA rewrites, standalone `server/vercel.json`, and dynamic CORS / cookie handling for production).
   - **In Progress / Next Tasks**: Attendance session marking workflows, student onboarding & class enrollment UI, and reports module.
@@ -68,8 +69,11 @@ server/src/
 client/src/
 ├── components/
 │   ├── auth/                # ProtectedRoute and PublicRoute navigation guards
+│   ├── classes/             # Classes & Lectures modals, tables, rows, filters, metrics
+│   ├── common/              # ConfirmDeleteModal, DeleteIconButton, GlobalLoadingIndicator
 │   ├── layout/              # DashboardLayout (Sidebar, navigation tabs, header)
-│   └── ui/                  # shadcn/ui & Radix primitives (button, card, input, badge)
+│   ├── teachers/            # Teacher modals, tables, rows, filters, metrics
+│   └── ui/                  # shadcn/ui & Radix primitives (button, card, input, badge, skeleton)
 ├── hooks/                   # Custom TanStack Query hooks (useTeachers)
 ├── lib/                     # Axios instance (api.ts), TanStack queryClient, teachers API, utils
 ├── pages/                   # Login, Register, Dashboard, Teachers, Records, ApiStatus
