@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   studentsApi,
   type StudentItem,
@@ -37,6 +37,15 @@ export function useStudentsPaginated(
   return useQuery({
     queryKey: studentKeys.list(params),
     queryFn: () => studentsApi.getAllPaginated(params),
+    placeholderData: keepPreviousData,
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useStudentMetrics(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: [...studentKeys.all, "metrics"],
+    queryFn: () => studentsApi.getMetrics(),
     enabled: options?.enabled ?? true,
   });
 }

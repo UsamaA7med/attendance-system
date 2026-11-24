@@ -37,3 +37,24 @@ export function AdminRoute() {
 
   return <Outlet />;
 }
+
+interface RoleRouteProps {
+  allowedRoles: string[];
+}
+
+export function RoleRoute({ allowedRoles }: RoleRouteProps) {
+  const { isAuthenticated, user } = useAuthStore();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const role = user?.role?.toLowerCase() || "";
+  const isAllowed = allowedRoles.map((r) => r.toLowerCase()).includes(role);
+
+  if (!isAllowed) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <Outlet />;
+}

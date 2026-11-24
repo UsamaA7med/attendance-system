@@ -7,7 +7,7 @@ export class LecturesController {
   async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const query = req.query as unknown as QueryLectureDto;
-      const result = await lecturesService.getAllLectures(query);
+      const result = await lecturesService.getAllLectures(query, req.user);
       if (result.pagination) {
         ApiResponse.paginated(
           res,
@@ -26,7 +26,7 @@ export class LecturesController {
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = String(req.params.id);
-      const lecture = await lecturesService.getLectureById(id);
+      const lecture = await lecturesService.getLectureById(id, req.user);
       ApiResponse.success(res, lecture, "Lecture retrieved successfully");
     } catch (error) {
       next(error);
@@ -40,7 +40,7 @@ export class LecturesController {
         ApiResponse.error(res, "Authentication required", 401);
         return;
       }
-      const created = await lecturesService.createLecture(userId, req.body);
+      const created = await lecturesService.createLecture(userId, req.body, req.user);
       ApiResponse.created(res, created, "Lecture created successfully");
     } catch (error) {
       next(error);
@@ -50,7 +50,7 @@ export class LecturesController {
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = String(req.params.id);
-      const updated = await lecturesService.updateLecture(id, req.body);
+      const updated = await lecturesService.updateLecture(id, req.body, req.user);
       ApiResponse.success(res, updated, "Lecture updated successfully");
     } catch (error) {
       next(error);
@@ -60,7 +60,7 @@ export class LecturesController {
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = String(req.params.id);
-      await lecturesService.deleteLecture(id);
+      await lecturesService.deleteLecture(id, req.user);
       ApiResponse.success(res, null, "Lecture deleted successfully");
     } catch (error) {
       next(error);
@@ -70,7 +70,7 @@ export class LecturesController {
   async getAttendance(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = String(req.params.id);
-      const data = await lecturesService.getLectureAttendance(id);
+      const data = await lecturesService.getLectureAttendance(id, req.user);
       ApiResponse.success(res, data, "Lecture attendance retrieved successfully");
     } catch (error) {
       next(error);
@@ -86,7 +86,7 @@ export class LecturesController {
         return;
       }
       const body = req.body as UpdateLectureAttendanceDto;
-      await lecturesService.updateLectureAttendance(id, userId, body);
+      await lecturesService.updateLectureAttendance(id, userId, body, req.user);
       ApiResponse.success(res, null, "Lecture attendance updated successfully");
     } catch (error) {
       next(error);

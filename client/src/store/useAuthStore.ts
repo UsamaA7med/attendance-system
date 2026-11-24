@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { api, getAccessToken, setAccessToken, clearTokens } from "@/lib/api";
+import { queryClient } from "@/lib/queryClient";
 
 export interface AuthUser {
   id: string;
@@ -30,6 +31,9 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
 
       setAuth: (user: AuthUser, token: string) => {
+        // Clear all query cache to prevent cross-user/role data leakage
+        queryClient.cancelQueries();
+        queryClient.clear();
         setAccessToken(token);
         set({
           user,
@@ -44,6 +48,8 @@ export const useAuthStore = create<AuthState>()(
           await api.post("/auth/logout").catch(() => {});
         } finally {
           clearTokens();
+          queryClient.cancelQueries();
+          queryClient.clear();
           set({
             user: null,
             token: null,
@@ -56,6 +62,8 @@ export const useAuthStore = create<AuthState>()(
       checkAuth: async () => {
         const token = getAccessToken();
         if (!token) {
+          queryClient.cancelQueries();
+          queryClient.clear();
           set({ user: null, token: null, isAuthenticated: false, isLoading: false });
           return;
         }
@@ -75,6 +83,8 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch {
           clearTokens();
+          queryClient.cancelQueries();
+          queryClient.clear();
           set({ user: null, token: null, isAuthenticated: false, isLoading: false });
         }
       },

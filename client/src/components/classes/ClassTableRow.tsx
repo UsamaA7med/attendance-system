@@ -5,7 +5,6 @@ import type { ClassItem } from "@/lib/classes.api";
 import {
   BookOpen,
   CalendarDays,
-  CalendarPlus,
   Edit,
   MapPin,
   Users,
@@ -16,14 +15,12 @@ interface ClassTableRowProps {
   cls: ClassItem;
   onEdit: (cls: ClassItem) => void;
   onDelete: (cls: ClassItem) => void;
-  onAddLecture: (cls: ClassItem) => void;
 }
 
 export const ClassTableRow = React.memo(function ClassTableRow({
   cls,
   onEdit,
   onDelete,
-  onAddLecture,
 }: ClassTableRowProps) {
   return (
     <tr className="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/50 transition-colors">
@@ -115,17 +112,6 @@ export const ClassTableRow = React.memo(function ClassTableRow({
       {/* Quick Actions */}
       <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-right whitespace-nowrap">
         <div className="flex items-center justify-end gap-1.5">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 px-2.5 text-xs gap-1.5 font-medium border-neutral-200 bg-white hover:bg-neutral-50 hover:text-neutral-900 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900 shadow-xs transition-colors"
-            onClick={() => onAddLecture(cls)}
-            title={`Schedule a lecture for ${cls.name}`}
-          >
-            <CalendarPlus className="h-3.5 w-3.5 text-neutral-600 dark:text-neutral-400" />
-            <span>Add Lecture</span>
-          </Button>
-
           <Button
             size="sm"
             variant="ghost"

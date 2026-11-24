@@ -25,7 +25,6 @@ export interface ClassTableProps {
   onOpenAdd: () => void;
   onEdit: (cls: ClassItem) => void;
   onDelete: (cls: ClassItem) => void;
-  onAddLecture: (cls: ClassItem) => void;
 }
 
 export const ClassTable = React.memo(function ClassTable({
@@ -36,7 +35,6 @@ export const ClassTable = React.memo(function ClassTable({
   onOpenAdd,
   onEdit,
   onDelete,
-  onAddLecture,
 }: ClassTableProps) {
   return (
     <DataTableContainer pagination={pagination}>
@@ -52,7 +50,7 @@ export const ClassTable = React.memo(function ClassTable({
         </TableHeader>
         <TableBody>
           {isLoading ? (
-            <TableSkeletonRows columns={5} rows={pagination?.limit || 5} hasAvatar={true} />
+            <TableSkeletonRows columns={5} rows={5} hasAvatar={true} />
           ) : classes.length === 0 ? (
             <TableRow>
               <TableCell colSpan={5} className="py-12 text-center text-neutral-500">
@@ -80,7 +78,6 @@ export const ClassTable = React.memo(function ClassTable({
                 cls={cls}
                 onEdit={onEdit}
                 onDelete={onDelete}
-                onAddLecture={onAddLecture}
               />
             ))
           )}

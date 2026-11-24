@@ -54,6 +54,7 @@ export interface LectureFilters {
   startDate?: string;
   endDate?: string;
   search?: string;
+  teacherId?: string;
   page?: number;
   limit?: number;
 }

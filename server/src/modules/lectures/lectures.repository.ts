@@ -83,6 +83,12 @@ class LecturesRepository {
       where.classId = filters.classId;
     }
 
+    if (filters?.teacherId) {
+      where.class = {
+        teacherId: filters.teacherId,
+      };
+    }
+
     if (filters?.date) {
       where.date = new Date(`${filters.date}T00:00:00.000Z`);
     } else if (filters?.startDate || filters?.endDate) {
@@ -103,8 +109,6 @@ class LecturesRepository {
         { notes: { contains: search, mode: "insensitive" } },
       ];
     }
-
-    const total = await prisma.lecture.count({ where });
 
     const include = {
       class: {
@@ -134,23 +138,24 @@ class LecturesRepository {
       },
     };
 
-    let lectures;
-    if (filters?.page && filters?.limit) {
-      const skip = (filters.page - 1) * filters.limit;
-      lectures = await prisma.lecture.findMany({
-        where,
-        skip,
-        take: filters.limit,
-        include,
-        orderBy: [{ date: "desc" }, { startTime: "asc" }],
-      });
-    } else {
-      lectures = await prisma.lecture.findMany({
-        where,
-        include,
-        orderBy: [{ date: "desc" }, { startTime: "asc" }],
-      });
-    }
+    const countPromise = prisma.lecture.count({ where });
+    const limit = filters?.limit || 10;
+    const findPromise =
+      filters?.page
+        ? prisma.lecture.findMany({
+            where,
+            skip: (filters.page - 1) * limit,
+            take: limit,
+            include,
+            orderBy: [{ date: "desc" as const }, { startTime: "asc" as const }],
+          })
+        : prisma.lecture.findMany({
+            where,
+            include,
+            orderBy: [{ date: "desc" as const }, { startTime: "asc" as const }],
+          });
+
+    const [total, lectures] = await Promise.all([countPromise, findPromise]);
 
     return {
       items: lectures.map(formatLectureResponse),

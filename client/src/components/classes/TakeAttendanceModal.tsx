@@ -12,8 +12,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   useLectureAttendance,
   useUpdateLectureAttendance,
+  lectureKeys,
 } from "@/hooks/useLectures";
-import { useStudents, useEnrollStudent } from "@/hooks/useStudents";
+import { useStudents, studentKeys } from "@/hooks/useStudents";
+import { classKeys } from "@/hooks/useClasses";
+import { studentsApi } from "@/lib/students.api";
+import { useQueryClient } from "@tanstack/react-query";
 import type { AttendanceStatusType } from "@/lib/lectures.api";
 import type { StudentItem } from "@/lib/students.api";
 import { toast } from "sonner";
@@ -217,8 +221,9 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
     enabled: isOpen && Boolean(lectureId),
   });
 
+  const queryClient = useQueryClient();
   const updateMutation = useUpdateLectureAttendance();
-  const enrollMutation = useEnrollStudent();
+  const [isEnrolling, setIsEnrolling] = useState(false);
 
   // 2. Attendance records state: Map of studentId -> { studentId, status, note }
   const [records, setRecords] = useState<Record<string, LocalRecordState>>({});
@@ -272,25 +277,34 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !updateMutation.isPending && !enrollMutation.isPending) {
+      if (e.key === "Escape" && !updateMutation.isPending && !isEnrolling) {
         onClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, updateMutation.isPending, enrollMutation.isPending, onClose]);
+  }, [isOpen, updateMutation.isPending, isEnrolling, onClose]);
 
   const lecture = data?.lecture;
+
+  // Set of student IDs currently present in roll call (decoupled from records to prevent re-renders on status changes)
+  const enrolledStudentIdSet = useMemo(() => {
+    const set = new Set<string>();
+    if (data?.students) {
+      data.students.forEach((s) => set.add(s.studentId));
+    }
+    extraStudents.forEach((s) => set.add(s.studentId));
+    return set;
+  }, [data?.students, extraStudents]);
 
   // Unenrolled registered students eligible to be added (uses deferred search for 60fps typing)
   const unenrolledRegisteredStudents = useMemo(() => {
     if (!showAddSelector) return [];
 
-    const currentStudentIds = new Set(Object.keys(records));
     const query = deferredSearchRegistered.toLowerCase().trim();
 
     return allRegisteredStudents.filter((s) => {
-      if (currentStudentIds.has(s.id)) return false;
+      if (enrolledStudentIdSet.has(s.id)) return false;
 
       if (!query) return true;
       return (
@@ -300,7 +314,7 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
         s.parentName.toLowerCase().includes(query)
       );
     });
-  }, [allRegisteredStudents, records, deferredSearchRegistered, showAddSelector]);
+  }, [allRegisteredStudents, enrolledStudentIdSet, deferredSearchRegistered, showAddSelector]);
 
   // Displayed students in roll call (base + extra added inline)
   const displayedStudents = useMemo(() => {
@@ -336,6 +350,12 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
     (status: AttendanceStatusType) => {
       if (displayedStudents.length === 0) return;
       setRecords((prev) => {
+        // Performance guard: do not re-render if all students already have target status
+        const isAlreadyAll = displayedStudents.every(
+          (s) => (prev[s.studentId]?.status || s.status) === status
+        );
+        if (isAlreadyAll) return prev;
+
         const next: Record<string, LocalRecordState> = {};
         displayedStudents.forEach((s) => {
           next[s.studentId] = {
@@ -388,27 +408,47 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
       setShowAddSelector(false);
       setSearchRegisteredQuery("");
 
-      // 3. Persist enrollment in class
+      // 3. Persist enrollment in class (direct API call to prevent multiple toasts and multiple query invalidations)
       try {
+        setIsEnrolling(true);
         await Promise.all(
           studentsToAdd.map((student) =>
-            enrollMutation.mutateAsync({
+            studentsApi.enroll({
               studentId: student.id,
               classId: lecture.classId,
             })
           )
         );
 
+        // Batch invalidate queries once
+        queryClient.invalidateQueries({
+          queryKey: lectureKeys.attendance(lecture.id),
+        });
+        queryClient.invalidateQueries({ queryKey: lectureKeys.all });
+        queryClient.invalidateQueries({ queryKey: classKeys.all });
+        queryClient.invalidateQueries({ queryKey: studentKeys.all });
+
+        // Exactly ONE single toast for the entire operation
+        toast.dismiss();
         toast.success(
           studentsToAdd.length === 1
             ? `Added "${studentsToAdd[0].fullName}" to roll call`
-            : `Added ${studentsToAdd.length} students to roll call`
+            : `Added ${studentsToAdd.length} students to roll call`,
+          {
+            description: `Enrolled in "${lecture.class.name}".`,
+          }
         );
-      } catch {
-        // Handled by mutation
+      } catch (err: unknown) {
+        const message =
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          "Failed to enroll student(s)";
+        toast.dismiss();
+        toast.error("Failed to add students to roll call", { description: message });
+      } finally {
+        setIsEnrolling(false);
       }
     },
-    [lecture, enrollMutation]
+    [lecture, queryClient]
   );
 
   const handleToggleStudentSelection = useCallback((studentId: string) => {
@@ -446,6 +486,30 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
     [handleAddStudentsToRollCall]
   );
 
+  // Memoized live summary counters for visual roll call progress
+  const summaryCounts = useMemo(() => {
+    let present = 0;
+    let absent = 0;
+    let late = 0;
+    let excused = 0;
+
+    displayedStudents.forEach((s) => {
+      const st = records[s.studentId]?.status || s.status;
+      if (st === "PRESENT") present++;
+      else if (st === "ABSENT") absent++;
+      else if (st === "LATE") late++;
+      else if (st === "EXCUSED") excused++;
+    });
+
+    return {
+      present,
+      absent,
+      late,
+      excused,
+      total: displayedStudents.length,
+    };
+  }, [displayedStudents, records]);
+
   const handleSave = useCallback(async () => {
     if (!lectureId) return;
     const payload = Object.values(records).map((r) => ({
@@ -474,7 +538,7 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
         if (
           e.target === e.currentTarget &&
           !updateMutation.isPending &&
-          !enrollMutation.isPending
+          !isEnrolling
         ) {
           onClose();
         }
@@ -506,20 +570,20 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
           <button
             type="button"
             onClick={onClose}
-            disabled={updateMutation.isPending || enrollMutation.isPending}
+            disabled={updateMutation.isPending || isEnrolling}
             className="rounded-lg p-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Action Bar: Bulk Actions & Inline Picker Toggle */}
-        <div className="px-6 py-2.5 bg-neutral-50/70 dark:bg-neutral-900/40 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-neutral-600 dark:text-neutral-400">
-              Bulk:
-            </span>
+        {/* Action Bar: Bulk Actions, Live Tally & Inline Picker Toggle */}
+        <div className="px-6 py-2.5 bg-neutral-50/70 dark:bg-neutral-900/40 border-b border-neutral-100 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-neutral-600 dark:text-neutral-400">
+                Bulk:
+              </span>
               <Button
                 type="button"
                 variant="outline"
@@ -541,6 +605,34 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
                 All Absent
               </Button>
             </div>
+
+            {displayedStudents.length > 0 && (
+              <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-neutral-500 font-medium pl-2 border-l border-neutral-200 dark:border-neutral-800">
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                  {summaryCounts.present} Present
+                </span>
+                <span>•</span>
+                <span className="text-rose-600 dark:text-rose-400 font-semibold">
+                  {summaryCounts.absent} Absent
+                </span>
+                {summaryCounts.late > 0 && (
+                  <>
+                    <span>•</span>
+                    <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                      {summaryCounts.late} Late
+                    </span>
+                  </>
+                )}
+                {summaryCounts.excused > 0 && (
+                  <>
+                    <span>•</span>
+                    <span className="text-blue-600 dark:text-blue-400 font-semibold">
+                      {summaryCounts.excused} Excused
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           <Button
@@ -618,7 +710,7 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
                     isChecked={selectedStudentIds.has(student.id)}
                     onToggle={handleToggleStudentSelection}
                     onAdd={handleAddSingle}
-                    isPending={enrollMutation.isPending}
+                    isPending={isEnrolling}
                   />
                 ))
               )}
@@ -636,10 +728,10 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
                   size="sm"
                   className="h-7 text-xs gap-1.5"
                   onClick={handleAddSelected}
-                  disabled={enrollMutation.isPending}
+                  disabled={isEnrolling}
                 >
                   <UserPlus className="h-3.5 w-3.5" />
-                  {enrollMutation.isPending
+                  {isEnrolling
                     ? "Adding..."
                     : `Add Selected (${selectedStudentIds.size}) to Roll Call`}
                 </Button>
@@ -710,7 +802,7 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
             variant="outline"
             size="sm"
             onClick={onClose}
-            disabled={updateMutation.isPending || enrollMutation.isPending}
+            disabled={updateMutation.isPending || isEnrolling}
           >
             Cancel
           </Button>
@@ -720,7 +812,7 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
             onClick={handleSave}
             disabled={
               updateMutation.isPending ||
-              enrollMutation.isPending ||
+              isEnrolling ||
               displayedStudents.length === 0
             }
             className="gap-1.5"

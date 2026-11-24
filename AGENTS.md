@@ -23,6 +23,10 @@
   - **Students Management (Staff & Admin Workflow)**: Completed (Full CRUD RESTful API `/api/students` with Zod schema validation, transactional cascade integrity, and staff/admin RBAC; dedicated Students tab & `/students` directory in frontend with live aggregate metrics, search, class filter, create modal with optional enrollment, edit modal, and unified `ConfirmDeleteModal` dialog).
   - **Attendance Flow (Dedicated Roll Call Workflow)**: Completed (Dedicated Attendance tab & `/attendance` page focused strictly on conducting student roll call across lecture sessions, date and class filters, session metrics, quick lecture scheduling, and integrated roll call modal with dynamic on-the-fly student enrollment).
   - **Shared Data Table & Server-Side Pagination**: Completed (Comprehensive pagination infrastructure: backend `ApiResponse.paginated` envelope with `PaginationMeta` across `/api/students`, `/api/teachers`, `/api/classes`, and `/api/lectures`; reusable shadcn-style `Table` primitives in `client/src/components/ui/table.tsx`; reusable `DataTablePagination` and `DataTableContainer` in `client/src/components/common/`; fully wired with server-driven pagination across `Students`, `Teachers`, `Classes`, `LecturesTable`, and `Attendance`).
+  - **Teacher Flow (Classes CRUD & Scoped Students View)**: Completed (Role-based teacher experience: teachers are automatically redirected to `/classes` upon login; navigation is scoped strictly to `Classes` and `Students`; full CRUD permissions on their own classes with automatic teacher assignment; scoped lecture scheduling and roll call for their classes; read-only student directory filtered strictly to students enrolled in their classes; strict 403 Forbidden enforcement on student mutations).
+  - **Table Performance Optimization & Shared Filters**: Completed (Resolved database query bottlenecks via concurrent `Promise.all` count/fetch execution, `pg.Pool` connection pooling on Neon, and dedicated `/metrics` fast count endpoints; eliminated search thrashing with 300ms debouncing; implemented flicker-free pagination transitions via `keepPreviousData`; optimized `TakeAttendanceModal` with parallel student enrollment and single consolidated toast notification; simplified table pagination to right-aligned basic page controls with default neutral theme; created shared and reusable `DataTableFilterBar` and `FilterSelect` components unifying filters across Students, Teachers, Classes, and Attendance).
+  - **Dedicated Lectures Management & Role-Based Navigation Matrix**: Completed (Separated Classes and Lectures into dedicated views; removed Dashboard tab and page with root `/` redirecting to role default views; centralized roll call execution on `/attendance`; aligned sidebar navigation and route guards across all 3 roles: Admin has Attendance, Classes, Lectures, Students, Teachers; Staff has Attendance, Lectures, Students; Teacher has Classes, Lectures, Attendance scoped strictly to their assigned classes, and Students; full CRUD on `/lectures` with EditLectureModal, CreateLectureModal, and DeleteLectureDialog).
+  - **Staff Management & Admin-Only Registration**: Completed (Dedicated Staff tab & `/staff` directory in frontend for Admins with create/register modal, edit modal, delete confirmation dialog, aggregate metrics, search, and status filters; full CRUD RESTful API `/api/staff` with RBAC; public `/register` page removed and self-registration replaced with zero-trust Admin-controlled onboarding).
   - **In Progress / Next Tasks**: Reports module and analytics exports.
 
 ---
@@ -51,6 +55,7 @@ server/src/
 │   ├── auth/                # Controller, Service, Repository, Routes, Schema, Types
 │   ├── users/               # Controller, Service, Repository, Routes, Schema, Types
 │   ├── teachers/            # Controller, Service, Repository, Routes, Schema, Types
+│   ├── staff/               # Controller, Service, Repository, Routes, Schema, Types
 │   ├── classes/             # Controller, Service, Repository, Routes, Schema, Types
 │   ├── lectures/            # Controller, Service, Repository, Routes, Schema, Types
 │   ├── students/            # Controller, Service, Repository, Routes, Schema, Types
@@ -126,24 +131,24 @@ client/src/
 
 ## 4. Authentication & Security Flow
 
-1. **Registration**:
-   - Public route `/api/v1/auth/register`.
-   - Public self-registration automatically sets role to `STAFF` (Teachers are created by Admins).
+1. **Registration (Admin Only)**:
+   - Route `/api/staff` or `/api/auth/register` restricted exclusively to `ADMIN`.
+   - Public self-registration page removed. All staff and teacher credentials are provisioned by center administrators.
    - Passwords hashed with `bcryptjs`.
 2. **Login**:
-   - Route `/api/v1/auth/login`.
+   - Route `/api/auth/login`.
    - Validates credentials and generates a token pair:
      - Access Token: JWT containing `{ userId, email, role }`, valid for 15 minutes. Set in HTTP cookie or Bearer header.
      - Refresh Token: Persisted in `RefreshToken` table, valid for 7 days.
 3. **Token Refresh (Rotation)**:
-   - Route `/api/v1/auth/refresh`.
+   - Route `/api/auth/refresh`.
    - Validates incoming refresh token against DB. If valid and not revoked, revokes current token, issues a brand new access token and refresh token (refresh token rotation).
 4. **Logout**:
-   - Route `/api/v1/auth/logout`.
+   - Route `/api/auth/logout`.
    - Revokes refresh token in database and clears auth cookies.
 5. **Route Protection (Client)**:
-   - Unauthorized users are restricted strictly to `/login` and `/register`.
-   - Authenticated users access `/` (Dashboard), `/records`, and `/api-status` within `DashboardLayout`.
+   - Unauthorized users are restricted strictly to `/login` (all other routes redirect to login).
+   - Authenticated users access their role-authorized dashboard views within `DashboardLayout`.
 
 ---
 

@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { useUpdateClass } from "@/hooks/useClasses";
 import type { ClassItem } from "@/lib/classes.api";
 import type { Teacher } from "@/lib/teachers.api";
+import { useAuthStore } from "@/store/useAuthStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BookOpen, X } from "lucide-react";
 import { useEffect } from "react";
@@ -26,6 +27,8 @@ interface EditClassModalProps {
 }
 
 export function EditClassModal({ cls, onClose, teachers }: EditClassModalProps) {
+  const { user } = useAuthStore();
+  const isTeacher = user?.role?.toLowerCase() === "teacher";
   const updateMutation = useUpdateClass();
 
   const {
@@ -76,7 +79,7 @@ export function EditClassModal({ cls, onClose, teachers }: EditClassModalProps) 
           name: data.name.trim(),
           room: data.room?.trim() || null,
           description: data.description?.trim() || null,
-          teacherId: data.teacherId,
+          teacherId: isTeacher && user ? user.id : data.teacherId,
           isActive: data.isActive,
         },
       });
@@ -136,19 +139,27 @@ export function EditClassModal({ cls, onClose, teachers }: EditClassModalProps) 
               <label className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
                 Assigned Teacher <span className="text-rose-500">*</span>
               </label>
-              <select
-                {...register("teacherId")}
-                className="mt-1 w-full h-9 px-3 text-xs rounded-md border border-neutral-200 bg-white text-neutral-800 shadow-xs focus:outline-none focus:ring-1 focus:ring-neutral-950 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200"
-              >
-                <option value="">Select Teacher...</option>
-                {teachers.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} ({t.department || "Instructor"})
-                  </option>
-                ))}
-              </select>
-              {errors.teacherId && (
-                <p className="mt-1 text-xs text-rose-500">{errors.teacherId.message}</p>
+              {isTeacher ? (
+                <div className="mt-1 flex h-9 items-center px-3 text-xs rounded-md border border-neutral-200 bg-neutral-100 text-neutral-800 font-medium dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200">
+                  {cls.teacher?.name || user?.name || "You"} (You)
+                </div>
+              ) : (
+                <>
+                  <select
+                    {...register("teacherId")}
+                    className="mt-1 w-full h-9 px-3 text-xs rounded-md border border-neutral-200 bg-white text-neutral-800 shadow-xs focus:outline-none focus:ring-1 focus:ring-neutral-950 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200"
+                  >
+                    <option value="">Select Teacher...</option>
+                    {teachers.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} ({t.department || "Instructor"})
+                      </option>
+                    ))}
+                  </select>
+                  {errors.teacherId && (
+                    <p className="mt-1 text-xs text-rose-500">{errors.teacherId.message}</p>
+                  )}
+                </>
               )}
             </div>
 

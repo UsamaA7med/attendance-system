@@ -1,8 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import pg from "pg";
 import { env } from "../../config/env.js";
 
-const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+const globalForPrisma = globalThis as unknown as {
+  prisma?: PrismaClient;
+  pool?: pg.Pool;
+};
 
 function getPrismaClient(): PrismaClient {
   if (globalForPrisma.prisma) {
@@ -17,7 +21,18 @@ function getPrismaClient(): PrismaClient {
     );
   }
 
-  const adapter = new PrismaPg({ connectionString });
+  const pool =
+    globalForPrisma.pool ??
+    new pg.Pool({
+      connectionString,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    });
+
+  globalForPrisma.pool = pool;
+
+  const adapter = new PrismaPg(pool);
   const client = new PrismaClient({ adapter });
 
   globalForPrisma.prisma = client;

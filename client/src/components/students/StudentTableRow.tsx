@@ -9,12 +9,14 @@ interface StudentTableRowProps {
   student: StudentItem;
   onEdit: (student: StudentItem) => void;
   onDelete: (student: StudentItem) => void;
+  readOnly?: boolean;
 }
 
 export const StudentTableRow = React.memo(function StudentTableRow({
   student,
   onEdit,
   onDelete,
+  readOnly = false,
 }: StudentTableRowProps) {
   const activeEnrollments = student.enrollments?.filter((e) => e.status === "ACTIVE") || [];
 
@@ -90,24 +92,26 @@ export const StudentTableRow = React.memo(function StudentTableRow({
       </td>
 
       {/* Action Buttons */}
-      <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-right whitespace-nowrap">
-        <div className="flex items-center justify-end gap-1.5">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onEdit(student)}
-            className="h-8 px-2 text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-            title="Edit Student"
-          >
-            <Edit className="h-3.5 w-3.5" />
-          </Button>
+      {!readOnly && (
+        <td className="px-4 py-3.5 sm:px-6 sm:py-4 text-right whitespace-nowrap">
+          <div className="flex items-center justify-end gap-1.5">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onEdit(student)}
+              className="h-8 px-2 text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+              title="Edit Student"
+            >
+              <Edit className="h-3.5 w-3.5" />
+            </Button>
 
-          <DeleteIconButton
-            onClick={() => onDelete(student)}
-            title="Delete Student"
-          />
-        </div>
-      </td>
+            <DeleteIconButton
+              onClick={() => onDelete(student)}
+              title="Delete Student"
+            />
+          </div>
+        </td>
+      )}
     </tr>
   );
 });

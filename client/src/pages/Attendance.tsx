@@ -1,25 +1,23 @@
 import { useState, useMemo, useCallback } from "react";
 import { useClasses } from "@/hooks/useClasses";
 import { useLectures, useLecturesPaginated } from "@/hooks/useLectures";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useAuthStore } from "@/store/useAuthStore";
 import type { LectureItem } from "@/lib/lectures.api";
 import {
   CalendarDays,
   CheckCircle2,
   Clock,
-  Plus,
-  Search,
   UserCheck,
   XCircle,
   Filter,
   ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 import { TakeAttendanceModal } from "@/components/classes/TakeAttendanceModal";
-import { CreateLectureModal } from "@/components/classes/CreateLectureModal";
 import {
   Table,
   TableHeader,
@@ -28,16 +26,20 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { DataTableContainer } from "@/components/common";
+import { DataTableContainer, DataTableFilterBar, FilterSelect } from "@/components/common";
 
 export function Attendance() {
+  const { user } = useAuthStore();
+  const isTeacher = user?.role?.toLowerCase() === "teacher";
+  const isAdmin = user?.role?.toLowerCase() === "admin";
+
   const getTodayString = () => new Date().toLocaleDateString("en-CA");
 
   const [selectedDate, setSelectedDate] = useState<string>(getTodayString());
   const [selectedClassId, setSelectedClassId] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
 
   const handleDateChange = useCallback((date: string) => {
     setSelectedDate(date);
@@ -57,7 +59,6 @@ export function Attendance() {
   // Modals state
   const [attendanceLectureId, setAttendanceLectureId] = useState<string | null>(null);
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
-  const [isCreateLectureOpen, setIsCreateLectureOpen] = useState(false);
 
   // Data fetching
   const { data: classes = [], isLoading: isLoadingClasses } = useClasses();
@@ -66,11 +67,10 @@ export function Attendance() {
     return {
       date: selectedDate || undefined,
       classId: selectedClassId !== "all" ? selectedClassId : undefined,
-      search: searchQuery.trim() || undefined,
+      search: debouncedSearch.trim() || undefined,
       page,
-      limit,
     };
-  }, [selectedDate, selectedClassId, searchQuery, page, limit]);
+  }, [selectedDate, selectedClassId, debouncedSearch, page]);
 
   const { data: lecturesResponse, isLoading: isLoadingLectures } = useLecturesPaginated(queryParams);
   const lectures = lecturesResponse?.data || [];
@@ -80,7 +80,7 @@ export function Attendance() {
   const { data: allFilteredLectures = [] } = useLectures({
     date: selectedDate || undefined,
     classId: selectedClassId !== "all" ? selectedClassId : undefined,
-    search: searchQuery.trim() || undefined,
+    search: debouncedSearch.trim() || undefined,
   });
 
   // Aggregate Metrics for the active filter
@@ -131,26 +131,18 @@ export function Attendance() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
-              Student Attendance
+              {isTeacher ? "My Class Attendance" : "Student Attendance"}
             </h1>
             <Badge variant="outline" className="text-xs">
-              Staff Portal
+              {isTeacher ? "Teacher Portal" : isAdmin ? "Admin Portal" : "Staff Portal"}
             </Badge>
           </div>
           <p className="mt-1 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
-            Conduct student roll call and track daily session attendance records.
+            {isTeacher
+              ? "Conduct roll call for your assigned lecture sessions and track student attendance."
+              : "Conduct student roll call and track daily session attendance records."}
           </p>
         </div>
-
-        <Button
-          type="button"
-          size="sm"
-          className="gap-1.5 shadow-xs"
-          onClick={() => setIsCreateLectureOpen(true)}
-        >
-          <Plus className="h-4 w-4" />
-          <span>Schedule Lecture</span>
-        </Button>
       </div>
 
       {/* Metrics Row */}
@@ -220,76 +212,62 @@ export function Attendance() {
         </Card>
       </div>
 
-      {/* Filter and Date Bar */}
-      <Card className="shadow-xs">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-            {/* Left Controls: Date Picker & Quick Date Buttons */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-neutral-100/70 dark:bg-neutral-800/60 p-1 rounded-lg">
-                <Button
-                  type="button"
-                  variant={selectedDate === getTodayString() ? "default" : "ghost"}
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => handleDateChange(getTodayString())}
-                >
-                  Today
-                </Button>
-                <Button
-                  type="button"
-                  variant={selectedDate === "" ? "default" : "ghost"}
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={() => handleDateChange("")}
-                >
-                  All Dates
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-1">
-                <CalendarDays className="h-4 w-4 text-neutral-400 shrink-0" />
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => handleDateChange(e.target.value)}
-                  className="h-8 px-2.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-xs text-neutral-800 dark:text-neutral-200 focus:outline-hidden focus:ring-1 focus:ring-neutral-400"
-                />
-              </div>
+      {/* Shared Filter and Date Bar */}
+      <DataTableFilterBar
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        searchPlaceholder="Search class or teacher..."
+        searchMaxWidth="max-w-xs"
+        leftContent={
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5 bg-neutral-100/70 dark:bg-neutral-800/60 p-1 rounded-lg">
+              <Button
+                type="button"
+                variant={selectedDate === getTodayString() ? "default" : "ghost"}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => handleDateChange(getTodayString())}
+              >
+                Today
+              </Button>
+              <Button
+                type="button"
+                variant={selectedDate === "" ? "default" : "ghost"}
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => handleDateChange("")}
+              >
+                All Dates
+              </Button>
             </div>
 
-            {/* Right Controls: Class Dropdown & Search */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1.5">
-                <Filter className="h-4 w-4 text-neutral-400 shrink-0" />
-                <select
-                  value={selectedClassId}
-                  onChange={(e) => handleClassChange(e.target.value)}
-                  className="h-8 px-2.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-xs text-neutral-800 dark:text-neutral-200 focus:outline-hidden focus:ring-1 focus:ring-neutral-400"
-                >
-                  <option value="all">All Classes</option>
-                  {classes.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} {c.room ? `(${c.room})` : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="relative min-w-[160px] sm:min-w-[200px]">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-400" />
-                <Input
-                  type="text"
-                  placeholder="Search class or teacher..."
-                  value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="h-8 pl-8 text-xs"
-                />
-              </div>
+            <div className="flex items-center gap-1.5">
+              <CalendarDays className="h-4 w-4 text-neutral-400 shrink-0" />
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => handleDateChange(e.target.value)}
+                aria-label="Filter by lecture date"
+                className="h-9 px-2.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-xs text-neutral-800 dark:text-neutral-200 focus:outline-hidden focus:ring-1 focus:ring-neutral-400 cursor-pointer"
+              />
             </div>
           </div>
-        </CardContent>
-      </Card>
+        }
+      >
+        <FilterSelect
+          icon={<Filter className="h-3.5 w-3.5" />}
+          value={selectedClassId}
+          onChange={handleClassChange}
+          options={[
+            { value: "all", label: "All Classes" },
+            ...classes.map((c) => ({
+              value: c.id,
+              label: `${c.name}${c.room ? ` (${c.room})` : ""}`,
+            })),
+          ]}
+          ariaLabel="Filter by class"
+        />
+      </DataTableFilterBar>
 
       {/* Lectures / Roll Call Table */}
       <DataTableContainer
@@ -297,13 +275,10 @@ export function Attendance() {
           paginationMeta
             ? {
                 page: paginationMeta.page,
-                limit: paginationMeta.limit,
-                total: paginationMeta.total,
                 totalPages: paginationMeta.totalPages,
                 hasNextPage: paginationMeta.hasNextPage,
                 hasPrevPage: paginationMeta.hasPrevPage,
                 onPageChange: setPage,
-                onLimitChange: setLimit,
                 isLoading: isLoadingLectures,
               }
             : undefined
@@ -322,7 +297,7 @@ export function Attendance() {
           </TableHeader>
           <TableBody>
             {isLoadingLectures || isLoadingClasses ? (
-              <TableSkeletonRows columns={5} rows={limit} hasAvatar={false} />
+              <TableSkeletonRows columns={5} rows={5} hasAvatar={false} />
             ) : lectures.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="py-14 text-center text-neutral-500">
@@ -332,17 +307,9 @@ export function Attendance() {
                   </p>
                   <p className="text-xs text-neutral-400 mt-1 max-w-sm mx-auto">
                     {selectedDate === getTodayString()
-                      ? "No lectures have been scheduled for today yet. You can schedule a session right now."
+                      ? "No lectures have been scheduled for today yet."
                       : "No lectures match your selected date and filters."}
                   </p>
-                  <Button
-                    size="sm"
-                    className="mt-4 gap-1.5"
-                    onClick={() => setIsCreateLectureOpen(true)}
-                  >
-                    <Plus className="h-4 w-4" />
-                    Schedule Lecture Session
-                  </Button>
                 </TableCell>
               </TableRow>
             ) : (
@@ -443,14 +410,6 @@ export function Attendance() {
         lectureId={attendanceLectureId}
         isOpen={isAttendanceModalOpen}
         onClose={handleCloseAttendance}
-      />
-
-      {/* Schedule Lecture Modal */}
-      <CreateLectureModal
-        isOpen={isCreateLectureOpen}
-        onClose={() => setIsCreateLectureOpen(false)}
-        classes={classes}
-        preselectedClassId={selectedClassId !== "all" ? selectedClassId : null}
       />
     </div>
   );

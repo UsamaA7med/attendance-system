@@ -45,6 +45,13 @@ export interface UpdateClassPayload {
   isActive?: boolean;
 }
 
+export interface ClassMetricsData {
+  totalClasses: number;
+  activeClasses: number;
+  totalLectures: number;
+  totalEnrollments: number;
+}
+
 export interface ClassQueryParams {
   search?: string;
   teacherId?: string;
@@ -88,5 +95,10 @@ export const classesApi = {
 
   delete: async (id: string): Promise<void> => {
     await api.delete(`/classes/${id}`);
+  },
+
+  getMetrics: async (): Promise<ClassMetricsData> => {
+    const res = await api.get<{ data: ClassMetricsData }>("/classes/metrics");
+    return res.data.data;
   },
 };

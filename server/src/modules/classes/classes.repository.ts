@@ -83,8 +83,6 @@ class ClassesRepository {
       ];
     }
 
-    const total = await prisma.class.count({ where });
-
     const include = {
       teacher: {
         select: {
@@ -112,23 +110,24 @@ class ClassesRepository {
       },
     };
 
-    let classes;
-    if (filters?.page && filters?.limit) {
-      const skip = (filters.page - 1) * filters.limit;
-      classes = await prisma.class.findMany({
-        where,
-        skip,
-        take: filters.limit,
-        include,
-        orderBy: { createdAt: "desc" },
-      });
-    } else {
-      classes = await prisma.class.findMany({
-        where,
-        include,
-        orderBy: { createdAt: "desc" },
-      });
-    }
+    const countPromise = prisma.class.count({ where });
+    const limit = filters?.limit || 10;
+    const findPromise =
+      filters?.page
+        ? prisma.class.findMany({
+            where,
+            skip: (filters.page - 1) * limit,
+            take: limit,
+            include,
+            orderBy: { createdAt: "desc" },
+          })
+        : prisma.class.findMany({
+            where,
+            include,
+            orderBy: { createdAt: "desc" },
+          });
+
+    const [total, classes] = await Promise.all([countPromise, findPromise]);
 
     return {
       items: classes.map(formatClassResponse),
@@ -252,6 +251,34 @@ class ClassesRepository {
       where: { id },
     });
     return true;
+  }
+
+  async getMetrics(teacherId?: string): Promise<{
+    totalClasses: number;
+    activeClasses: number;
+    totalLectures: number;
+    totalEnrollments: number;
+  }> {
+    const classWhere: Prisma.ClassWhereInput = teacherId ? { teacherId } : {};
+
+    const [totalClasses, activeClasses, totalLectures, totalEnrollments] = await Promise.all([
+      prisma.class.count({ where: classWhere }),
+      prisma.class.count({ where: { ...classWhere, isActive: true } }),
+      prisma.lecture.count({ where: teacherId ? { class: { teacherId } } : {} }),
+      prisma.enrollment.count({
+        where: {
+          ...(teacherId ? { class: { teacherId } } : {}),
+          status: "ACTIVE",
+        },
+      }),
+    ]);
+
+    return {
+      totalClasses,
+      activeClasses,
+      totalLectures,
+      totalEnrollments,
+    };
   }
 }
 

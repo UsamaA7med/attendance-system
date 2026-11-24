@@ -6,14 +6,16 @@ import {
   QueryLectureDto,
   UpdateLectureAttendanceDto,
 } from "./lectures.schema.js";
-import { LectureResponse } from "./lectures.types.js";
+import { LectureResponse, LectureFilters } from "./lectures.types.js";
 import {
   NotFoundError,
   ConflictError,
   BadRequestError,
+  ForbiddenError,
 } from "../../core/errors/app-error.js";
 import { AttendanceStatus } from "@prisma/client";
 import { PaginationMeta } from "../../core/utils/api-response.js";
+import { AuthPayload } from "../../core/middleware/authenticate.js";
 
 export interface StudentAttendanceItem {
   id: string; // Attendance record id
@@ -28,23 +30,33 @@ export interface StudentAttendanceItem {
 }
 
 export class LecturesService {
-  async getAllLectures(query?: QueryLectureDto): Promise<{
+  async getAllLectures(
+    query?: QueryLectureDto,
+    currentUser?: AuthPayload
+  ): Promise<{
     items: LectureResponse[];
     pagination?: PaginationMeta;
   }> {
-    const { items, total } = await lecturesRepository.findAll(query);
+    const effectiveQuery: LectureFilters = { ...query };
+    if (currentUser?.role?.toLowerCase() === "teacher") {
+      effectiveQuery.teacherId = currentUser.userId;
+    }
 
-    if (query?.page && query?.limit) {
-      const totalPages = Math.ceil(total / query.limit) || 1;
+    const page = effectiveQuery?.page;
+    const limit = effectiveQuery?.limit || 10;
+    const { items, total } = await lecturesRepository.findAll({ ...effectiveQuery, limit });
+
+    if (page) {
+      const totalPages = Math.ceil(total / limit) || 1;
       return {
         items,
         pagination: {
-          page: query.page,
-          limit: query.limit,
+          page,
+          limit,
           total,
           totalPages,
-          hasNextPage: query.page < totalPages,
-          hasPrevPage: query.page > 1,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
         },
       };
     }
@@ -52,15 +64,27 @@ export class LecturesService {
     return { items };
   }
 
-  async getLectureById(id: string): Promise<LectureResponse> {
+  async getLectureById(id: string, currentUser?: AuthPayload): Promise<LectureResponse> {
     const lecture = await lecturesRepository.findById(id);
     if (!lecture) {
       throw new NotFoundError(`Lecture with id '${id}' not found`);
     }
+
+    if (
+      currentUser?.role?.toLowerCase() === "teacher" &&
+      lecture.class.teacher?.id !== currentUser.userId
+    ) {
+      throw new ForbiddenError("You are not authorized to access this lecture");
+    }
+
     return lecture;
   }
 
-  async createLecture(userId: string, dto: CreateLectureDto): Promise<LectureResponse> {
+  async createLecture(
+    userId: string,
+    dto: CreateLectureDto,
+    currentUser?: AuthPayload
+  ): Promise<LectureResponse> {
     // 1. Verify class exists & find enrolled students
     const classExists = await prisma.class.findUnique({
       where: { id: dto.classId },
@@ -74,6 +98,13 @@ export class LecturesService {
 
     if (!classExists) {
       throw new NotFoundError(`Class with id '${dto.classId}' not found`);
+    }
+
+    if (
+      currentUser?.role?.toLowerCase() === "teacher" &&
+      classExists.teacherId !== currentUser.userId
+    ) {
+      throw new ForbiddenError("You are not authorized to schedule lectures for this class");
     }
 
     // 2. Validate UTC Date
@@ -123,10 +154,21 @@ export class LecturesService {
     return createdLecture;
   }
 
-  async updateLecture(id: string, dto: UpdateLectureDto): Promise<LectureResponse> {
+  async updateLecture(
+    id: string,
+    dto: UpdateLectureDto,
+    currentUser?: AuthPayload
+  ): Promise<LectureResponse> {
     const existing = await lecturesRepository.findById(id);
     if (!existing) {
       throw new NotFoundError(`Lecture with id '${id}' not found`);
+    }
+
+    if (
+      currentUser?.role?.toLowerCase() === "teacher" &&
+      existing.class.teacher?.id !== currentUser.userId
+    ) {
+      throw new ForbiddenError("You are not authorized to update this lecture");
     }
 
     let parsedDate: Date | undefined;
@@ -161,19 +203,30 @@ export class LecturesService {
     });
   }
 
-  async deleteLecture(id: string): Promise<void> {
+  async deleteLecture(id: string, currentUser?: AuthPayload): Promise<void> {
     const existing = await lecturesRepository.findById(id);
     if (!existing) {
       throw new NotFoundError(`Lecture with id '${id}' not found`);
     }
+
+    if (
+      currentUser?.role?.toLowerCase() === "teacher" &&
+      existing.class.teacher?.id !== currentUser.userId
+    ) {
+      throw new ForbiddenError("You are not authorized to delete this lecture");
+    }
+
     await lecturesRepository.delete(id);
   }
 
-  async getLectureAttendance(lectureId: string): Promise<{
+  async getLectureAttendance(
+    lectureId: string,
+    currentUser?: AuthPayload
+  ): Promise<{
     lecture: LectureResponse;
     students: StudentAttendanceItem[];
   }> {
-    const lecture = await this.getLectureById(lectureId);
+    const lecture = await this.getLectureById(lectureId, currentUser);
 
     // Get active students enrolled in this class
     const enrollments = await prisma.enrollment.findMany({
@@ -222,9 +275,10 @@ export class LecturesService {
   async updateLectureAttendance(
     lectureId: string,
     markerUserId: string,
-    dto: UpdateLectureAttendanceDto
+    dto: UpdateLectureAttendanceDto,
+    currentUser?: AuthPayload
   ): Promise<void> {
-    const lecture = await this.getLectureById(lectureId);
+    const lecture = await this.getLectureById(lectureId, currentUser);
 
     const now = new Date();
     for (const item of dto.records) {

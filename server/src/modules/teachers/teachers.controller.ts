@@ -4,6 +4,15 @@ import { ApiResponse } from "../../core/utils/api-response.js";
 import { QueryTeacherDto } from "./teachers.schema.js";
 
 export class TeachersController {
+  async getMetrics(_req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const metrics = await teachersService.getMetrics();
+      ApiResponse.success(res, metrics, "Teacher metrics retrieved successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const query = req.query as unknown as QueryTeacherDto;

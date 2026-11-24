@@ -1,5 +1,6 @@
-import { useState, useMemo, useCallback, useDeferredValue } from "react";
-import { useTeachers, useTeachersPaginated, useDeleteTeacher } from "@/hooks/useTeachers";
+import { useState, useMemo, useCallback } from "react";
+import { useTeachersPaginated, useTeacherMetrics, useDeleteTeacher } from "@/hooks/useTeachers";
+import { useDebounce } from "@/hooks/useDebounce";
 import type { Teacher } from "@/lib/teachers.api";
 import { useAuthStore } from "@/store/useAuthStore";
 import {
@@ -20,10 +21,9 @@ export function Teachers() {
 
   // Search & Filter States
   const [searchQuery, setSearchQuery] = useState("");
-  const deferredSearch = useDeferredValue(searchQuery);
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [statusFilter, setStatusFilter] = useState<StatusFilterOption>("all");
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
 
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
@@ -37,13 +37,12 @@ export function Teachers() {
 
   const queryParams = useMemo(() => {
     return {
-      search: deferredSearch.trim() || undefined,
+      search: debouncedSearch.trim() || undefined,
       isActive:
         statusFilter === "active" ? true : statusFilter === "inactive" ? false : undefined,
       page,
-      limit,
     };
-  }, [deferredSearch, statusFilter, page, limit]);
+  }, [debouncedSearch, statusFilter, page]);
 
   // TanStack Query: Paginated Teacher Roster
   const { data: teachersResponse, isLoading } = useTeachersPaginated(queryParams, {
@@ -52,10 +51,8 @@ export function Teachers() {
   const teachers = teachersResponse?.data || [];
   const paginationMeta = teachersResponse?.pagination;
 
-  // Unpaginated list for aggregate metrics across all pages
-  const { data: allTeachers = [] } = useTeachers(undefined, {
-    enabled: isAdmin,
-  });
+  // Lightweight server-side metrics
+  const { data: metrics } = useTeacherMetrics({ enabled: isAdmin });
 
   const deleteMutation = useDeleteTeacher();
 
@@ -65,12 +62,9 @@ export function Teachers() {
   const [deletingTeacher, setDeletingTeacher] = useState<Teacher | null>(null);
 
   // Aggregate Metrics
-  const totalCount = allTeachers.length;
-  const activeCount = useMemo(() => allTeachers.filter((t) => t.isActive).length, [allTeachers]);
-  const totalClassesAssigned = useMemo(
-    () => allTeachers.reduce((acc, t) => acc + (t.classesCount || 0), 0),
-    [allTeachers]
-  );
+  const totalCount = metrics?.totalCount ?? paginationMeta?.total ?? 0;
+  const activeCount = metrics?.activeCount ?? 0;
+  const totalClassesAssigned = metrics?.totalClassesAssigned ?? 0;
 
   // Stable callbacks for child components to prevent re-renders
   const handleOpenAdd = useCallback(() => setIsAddModalOpen(true), []);
@@ -138,13 +132,10 @@ export function Teachers() {
           paginationMeta
             ? {
                 page: paginationMeta.page,
-                limit: paginationMeta.limit,
-                total: paginationMeta.total,
                 totalPages: paginationMeta.totalPages,
                 hasNextPage: paginationMeta.hasNextPage,
                 hasPrevPage: paginationMeta.hasPrevPage,
                 onPageChange: setPage,
-                onLimitChange: setLimit,
                 isLoading,
               }
             : undefined

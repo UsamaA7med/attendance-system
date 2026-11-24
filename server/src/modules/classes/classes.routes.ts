@@ -13,14 +13,15 @@ const router = Router();
 // Authentication required for all endpoints
 router.use(authenticate);
 
-// Read Endpoints: accessible to both Admin and Staff
-router.get("/", authorize("admin", "staff"), validate({ query: queryClassSchema }), classesController.getAll);
-router.get("/:id", authorize("admin", "staff"), classesController.getById);
+// Read Endpoints: accessible to Admin, Staff, and Teacher
+router.get("/metrics", authorize("admin", "staff", "teacher"), classesController.getMetrics);
+router.get("/", authorize("admin", "staff", "teacher"), validate({ query: queryClassSchema }), classesController.getAll);
+router.get("/:id", authorize("admin", "staff", "teacher"), classesController.getById);
 
-// Write Endpoints: Admin only
-router.post("/", authorize("admin"), validate({ body: createClassSchema }), classesController.create);
-router.put("/:id", authorize("admin"), validate({ body: updateClassSchema }), classesController.update);
-router.patch("/:id", authorize("admin"), validate({ body: updateClassSchema }), classesController.update);
-router.delete("/:id", authorize("admin"), classesController.delete);
+// Write Endpoints: Admin and Teacher
+router.post("/", authorize("admin", "teacher"), validate({ body: createClassSchema }), classesController.create);
+router.put("/:id", authorize("admin", "teacher"), validate({ body: updateClassSchema }), classesController.update);
+router.patch("/:id", authorize("admin", "teacher"), validate({ body: updateClassSchema }), classesController.update);
+router.delete("/:id", authorize("admin", "teacher"), classesController.delete);
 
 export const classesRouter = router;

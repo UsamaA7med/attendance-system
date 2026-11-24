@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   lecturesApi,
   type LectureItem,
@@ -38,6 +38,7 @@ export function useLecturesPaginated(
   return useQuery({
     queryKey: lectureKeys.list(params),
     queryFn: () => lecturesApi.getAllPaginated(params),
+    placeholderData: keepPreviousData,
     enabled: options?.enabled ?? true,
   });
 }

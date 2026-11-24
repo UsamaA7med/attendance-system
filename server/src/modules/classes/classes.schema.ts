@@ -9,9 +9,10 @@ export const createClassSchema = z.object({
   description: z.string().trim().optional().nullable(),
   room: z.string().trim().max(50, "Room name cannot exceed 50 characters").optional().nullable(),
   teacherId: z
-    .string({ required_error: "Teacher ID is required" })
+    .string()
     .trim()
-    .min(1, "Teacher ID must not be empty"),
+    .min(1, "Teacher ID must not be empty")
+    .optional(),
   isActive: z.boolean().optional().default(true),
 });
 

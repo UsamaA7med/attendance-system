@@ -19,19 +19,21 @@ export class TeachersService {
     items: TeacherResponse[];
     pagination?: PaginationMeta;
   }> {
-    const { items, total } = await teachersRepository.findAll(query);
+    const page = query?.page;
+    const limit = query?.limit || 10;
+    const { items, total } = await teachersRepository.findAll({ ...query, limit });
 
-    if (query?.page && query?.limit) {
-      const totalPages = Math.ceil(total / query.limit) || 1;
+    if (page) {
+      const totalPages = Math.ceil(total / limit) || 1;
       return {
         items,
         pagination: {
-          page: query.page,
-          limit: query.limit,
+          page,
+          limit,
           total,
           totalPages,
-          hasNextPage: query.page < totalPages,
-          hasPrevPage: query.page > 1,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
         },
       };
     }
@@ -129,6 +131,10 @@ export class TeachersService {
     }
 
     await teachersRepository.delete(id);
+  }
+
+  async getMetrics() {
+    return teachersRepository.getMetrics();
   }
 }
 

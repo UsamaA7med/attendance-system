@@ -14,6 +14,7 @@ const router = Router();
 router.use(authenticate, authorize("admin"));
 
 // Teacher CRUD Routes
+router.get("/metrics", teachersController.getMetrics);
 router.get("/", validate({ query: queryTeacherSchema }), teachersController.getAll);
 router.get("/:id", teachersController.getById);
 router.post("/", validate({ body: createTeacherSchema }), teachersController.create);

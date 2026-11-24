@@ -1,7 +1,9 @@
-import { useState, useMemo, useCallback, useDeferredValue } from "react";
-import { useStudents, useStudentsPaginated, useDeleteStudent } from "@/hooks/useStudents";
+import { useState, useMemo, useCallback } from "react";
+import { useStudentsPaginated, useStudentMetrics, useDeleteStudent } from "@/hooks/useStudents";
 import { useClasses } from "@/hooks/useClasses";
+import { useDebounce } from "@/hooks/useDebounce";
 import type { StudentItem } from "@/lib/students.api";
+import { useAuthStore } from "@/store/useAuthStore";
 import {
   StudentMetrics,
   StudentFilters,
@@ -15,16 +17,18 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
 export function Students() {
+  const { user } = useAuthStore();
+  const isTeacher = user?.role?.toLowerCase() === "teacher";
+
   // Data fetching
   const { data: classes = [] } = useClasses();
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
-  const deferredSearch = useDeferredValue(searchQuery);
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [statusFilter, setStatusFilter] = useState<StudentStatusOption>("all");
   const [classFilter, setClassFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
 
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
@@ -43,21 +47,20 @@ export function Students() {
 
   const queryParams = useMemo(() => {
     return {
-      search: deferredSearch.trim() || undefined,
+      search: debouncedSearch.trim() || undefined,
       classId: classFilter !== "all" ? classFilter : undefined,
       isActive:
         statusFilter === "active" ? true : statusFilter === "inactive" ? false : undefined,
       page,
-      limit,
     };
-  }, [deferredSearch, classFilter, statusFilter, page, limit]);
+  }, [debouncedSearch, classFilter, statusFilter, page]);
 
   const { data: studentsResponse, isLoading } = useStudentsPaginated(queryParams);
   const students = studentsResponse?.data || [];
   const paginationMeta = studentsResponse?.pagination;
 
-  // Unpaginated students for accurate aggregate metrics
-  const { data: allStudents = [] } = useStudents();
+  // Lightweight server-side metrics
+  const { data: metrics } = useStudentMetrics();
   const deleteMutation = useDeleteStudent();
 
   // Modal states
@@ -66,21 +69,10 @@ export function Students() {
   const [deletingStudent, setDeletingStudent] = useState<StudentItem | null>(null);
 
   // Metrics
-  const totalStudents = allStudents.length;
-  const activeStudents = useMemo(
-    () => allStudents.filter((s) => s.isActive).length,
-    [allStudents]
-  );
-  const inactiveStudents = totalStudents - activeStudents;
-  const totalEnrollments = useMemo(
-    () =>
-      allStudents.reduce(
-        (acc, s) =>
-          acc + (s.enrollments?.filter((e) => e.status === "ACTIVE").length || 0),
-        0
-      ),
-    [allStudents]
-  );
+  const totalStudents = metrics?.total ?? paginationMeta?.total ?? 0;
+  const activeStudents = metrics?.active ?? 0;
+  const inactiveStudents = metrics?.inactive ?? 0;
+  const totalEnrollments = metrics?.totalEnrollments ?? 0;
 
   // Callbacks
   const handleOpenAdd = useCallback(() => setIsAddModalOpen(true), []);
@@ -109,22 +101,26 @@ export function Students() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
-              Students Directory
+              {isTeacher ? "My Students" : "Students Directory"}
             </h1>
           </div>
           <p className="mt-1 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
-            Manage student registrations, guardian contact details, and class enrollments.
+            {isTeacher
+              ? "View students enrolled in your classes and their guardian contact info."
+              : "Manage student registrations, guardian contact details, and class enrollments."}
           </p>
         </div>
 
-        <Button
-          size="sm"
-          className="gap-1.5 shadow-xs"
-          onClick={handleOpenAdd}
-        >
-          <Plus className="h-4 w-4" />
-          <span>Register Student</span>
-        </Button>
+        {!isTeacher && (
+          <Button
+            size="sm"
+            className="gap-1.5 shadow-xs"
+            onClick={handleOpenAdd}
+          >
+            <Plus className="h-4 w-4" />
+            <span>Register Student</span>
+          </Button>
+        )}
       </div>
 
       {/* Metrics */}
@@ -155,13 +151,10 @@ export function Students() {
           paginationMeta
             ? {
                 page: paginationMeta.page,
-                limit: paginationMeta.limit,
-                total: paginationMeta.total,
                 totalPages: paginationMeta.totalPages,
                 hasNextPage: paginationMeta.hasNextPage,
                 hasPrevPage: paginationMeta.hasPrevPage,
                 onPageChange: setPage,
-                onLimitChange: setLimit,
                 isLoading,
               }
             : undefined
@@ -169,6 +162,7 @@ export function Students() {
         onOpenAdd={handleOpenAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        readOnly={isTeacher}
       />
 
       {/* Create Modal */}

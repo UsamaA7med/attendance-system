@@ -46,6 +46,13 @@ export interface EnrollStudentPayload {
   classId: string;
 }
 
+export interface StudentMetricsData {
+  total: number;
+  active: number;
+  inactive: number;
+  totalEnrollments: number;
+}
+
 export interface StudentQueryParams {
   search?: string;
   classId?: string;
@@ -95,5 +102,10 @@ export const studentsApi = {
 
   delete: async (id: string): Promise<void> => {
     await api.delete(`/students/${id}`);
+  },
+
+  getMetrics: async (): Promise<StudentMetricsData> => {
+    const res = await api.get<{ data: StudentMetricsData }>("/students/metrics");
+    return res.data.data;
   },
 };

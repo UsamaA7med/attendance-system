@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { loginSchema, type LoginFormData } from "./auth.schemas";
 import { PasswordInput } from "./PasswordInput";
@@ -55,7 +55,8 @@ export const LoginForm = React.memo(function LoginForm() {
         description: `Welcome back, ${user.name}! Access granted.`,
       });
 
-      navigate("/", { replace: true });
+      const destination = user.role?.toLowerCase() === "teacher" ? "/classes" : "/attendance";
+      navigate(destination, { replace: true });
     } catch (err: unknown) {
       const error = err as {
         response?: { data?: { message?: string } };
@@ -130,16 +131,6 @@ export const LoginForm = React.memo(function LoginForm() {
             </>
           )}
         </Button>
-
-        <div className="pt-2 text-center text-xs text-neutral-500 dark:text-neutral-400 border-t border-neutral-100 dark:border-neutral-800/80 w-full">
-          Don't have an account?{" "}
-          <Link
-            to="/register"
-            className="font-semibold text-neutral-900 hover:text-neutral-700 dark:text-neutral-100 dark:hover:text-neutral-300 underline underline-offset-4 transition-colors"
-          >
-            Create an account
-          </Link>
-        </div>
       </CardFooter>
     </form>
   );

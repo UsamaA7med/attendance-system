@@ -9,10 +9,20 @@ import {
 } from "./students.schema.js";
 
 export class StudentsController {
+  async getMetrics(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const metrics = await studentsService.getMetrics(req.user);
+      ApiResponse.success(res, metrics, "Student metrics retrieved successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const result = await studentsService.getAllStudents(
-        req.query as unknown as QueryStudentDto
+        req.query as unknown as QueryStudentDto,
+        req.user
       );
       if (result.pagination) {
         ApiResponse.paginated(
@@ -32,7 +42,7 @@ export class StudentsController {
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = String(req.params.id);
-      const student = await studentsService.getStudentById(id);
+      const student = await studentsService.getStudentById(id, req.user);
       ApiResponse.success(res, student, "Student retrieved successfully");
     } catch (error) {
       next(error);

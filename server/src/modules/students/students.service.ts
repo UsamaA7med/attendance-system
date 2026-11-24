@@ -10,28 +10,49 @@ import { StudentResponse } from "./students.types.js";
 import {
   NotFoundError,
   BadRequestError,
+  ForbiddenError,
 } from "../../core/errors/app-error.js";
 import { AttendanceStatus } from "@prisma/client";
 import { PaginationMeta } from "../../core/utils/api-response.js";
+import { AuthPayload } from "../../core/middleware/authenticate.js";
 
 export class StudentsService {
-  async getAllStudents(query?: QueryStudentDto): Promise<{
+  async getAllStudents(
+    query?: QueryStudentDto,
+    currentUser?: AuthPayload
+  ): Promise<{
     items: StudentResponse[];
     pagination?: PaginationMeta;
   }> {
-    const { items, total } = await studentsRepository.findAll(query);
+    const page = query?.page;
+    const limit = query?.limit || 10;
+    const filters: {
+      search?: string;
+      classId?: string;
+      excludeClassId?: string;
+      isActive?: boolean;
+      page?: number;
+      limit?: number;
+      teacherId?: string;
+    } = { ...query, limit };
 
-    if (query?.page && query?.limit) {
-      const totalPages = Math.ceil(total / query.limit) || 1;
+    if (currentUser?.role?.toLowerCase() === "teacher") {
+      filters.teacherId = currentUser.userId;
+    }
+
+    const { items, total } = await studentsRepository.findAll(filters);
+
+    if (page) {
+      const totalPages = Math.ceil(total / limit) || 1;
       return {
         items,
         pagination: {
-          page: query.page,
-          limit: query.limit,
+          page,
+          limit,
           total,
           totalPages,
-          hasNextPage: query.page < totalPages,
-          hasPrevPage: query.page > 1,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
         },
       };
     }
@@ -39,11 +60,25 @@ export class StudentsService {
     return { items };
   }
 
-  async getStudentById(id: string): Promise<StudentResponse> {
+  async getStudentById(id: string, currentUser?: AuthPayload): Promise<StudentResponse> {
     const student = await studentsRepository.findById(id);
     if (!student) {
       throw new NotFoundError(`Student with id '${id}' not found`);
     }
+
+    if (currentUser?.role?.toLowerCase() === "teacher") {
+      const isEnrolledInTeacherClass = await prisma.enrollment.findFirst({
+        where: {
+          studentId: id,
+          class: { teacherId: currentUser.userId },
+        },
+      });
+
+      if (!isEnrolledInTeacherClass) {
+        throw new ForbiddenError("You are not authorized to view this student");
+      }
+    }
+
     return student;
   }
 
@@ -181,6 +216,14 @@ export class StudentsService {
     }
 
     await studentsRepository.delete(id);
+  }
+
+  async getMetrics(currentUser?: AuthPayload) {
+    const teacherId =
+      currentUser?.role?.toLowerCase() === "teacher"
+        ? currentUser.userId
+        : undefined;
+    return studentsRepository.getMetrics(teacherId);
   }
 }
 

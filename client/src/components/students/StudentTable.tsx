@@ -25,6 +25,7 @@ export interface StudentTableProps {
   onOpenAdd: () => void;
   onEdit: (student: StudentItem) => void;
   onDelete: (student: StudentItem) => void;
+  readOnly?: boolean;
 }
 
 export const StudentTable = React.memo(function StudentTable({
@@ -35,6 +36,7 @@ export const StudentTable = React.memo(function StudentTable({
   onOpenAdd,
   onEdit,
   onDelete,
+  readOnly = false,
 }: StudentTableProps) {
   return (
     <DataTableContainer pagination={pagination}>
@@ -45,15 +47,15 @@ export const StudentTable = React.memo(function StudentTable({
             <TableHead>Guardian & Phone</TableHead>
             <TableHead>Enrolled Classes</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            {!readOnly && <TableHead className="text-right">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading ? (
-            <TableSkeletonRows columns={5} rows={pagination?.limit || 5} hasAvatar={true} />
+            <TableSkeletonRows columns={readOnly ? 4 : 5} rows={5} hasAvatar={true} />
           ) : students.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="py-12 text-center text-neutral-500">
+              <TableCell colSpan={readOnly ? 4 : 5} className="py-12 text-center text-neutral-500">
                 <Users className="h-8 w-8 mx-auto text-neutral-400 mb-2" />
                 <p className="font-semibold text-neutral-700 dark:text-neutral-300">
                   {searchQuery ? "No matching students found" : "No students registered yet"}
@@ -61,9 +63,11 @@ export const StudentTable = React.memo(function StudentTable({
                 <p className="text-xs text-neutral-400 mt-1 max-w-xs mx-auto">
                   {searchQuery
                     ? "Try adjusting your search keywords or clear filters."
+                    : readOnly
+                    ? "No students are currently enrolled in your classes."
                     : "Start onboarding students and enrolling them into classes."}
                 </p>
-                {!searchQuery && (
+                {!searchQuery && !readOnly && (
                   <Button
                     size="sm"
                     className="mt-4 gap-1.5"
@@ -82,6 +86,7 @@ export const StudentTable = React.memo(function StudentTable({
                 student={student}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                readOnly={readOnly}
               />
             ))
           )}

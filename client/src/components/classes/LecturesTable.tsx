@@ -5,14 +5,13 @@ import type { LectureItem } from "@/lib/lectures.api";
 import {
   BookOpen,
   CalendarDays,
-  CheckCircle2,
   Clock,
+  Edit,
   Plus,
-  UserCheck,
-  XCircle,
 } from "lucide-react";
 import React, { useState } from "react";
 import { DeleteLectureDialog } from "./DeleteLectureDialog";
+import { EditLectureModal } from "./EditLectureModal";
 import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 import {
   Table,
@@ -25,23 +24,50 @@ import {
 import { DataTableContainer } from "@/components/common";
 
 interface LecturesTableProps {
-  onOpenCreateLecture: (classId?: string) => void;
-  onTakeAttendance: (lecture: LectureItem) => void;
+  onOpenCreateLecture?: (classId?: string) => void;
+  onEditLecture?: (lecture: LectureItem) => void;
+  classId?: string;
+  date?: string;
+  search?: string;
+  page?: number;
+  onPageChange?: (page: number) => void;
 }
 
 export const LecturesTable = React.memo(function LecturesTable({
   onOpenCreateLecture,
-  onTakeAttendance,
+  onEditLecture,
+  classId,
+  date,
+  search,
+  page: controlledPage,
+  onPageChange: controlledOnPageChange,
 }: LecturesTableProps) {
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [internalPage, setInternalPage] = useState(1);
+  const activePage = controlledPage !== undefined ? controlledPage : internalPage;
+  const handlePageChange = controlledOnPageChange || setInternalPage;
 
-  const { data: lecturesResponse, isLoading } = useLecturesPaginated({ page, limit });
+  const queryParams = {
+    page: activePage,
+    classId: classId && classId !== "all" ? classId : undefined,
+    date: date || undefined,
+    search: search?.trim() || undefined,
+  };
+
+  const { data: lecturesResponse, isLoading } = useLecturesPaginated(queryParams);
   const lectures = lecturesResponse?.data || [];
   const paginationMeta = lecturesResponse?.pagination;
 
   const deleteMutation = useDeleteLecture();
   const [deletingLecture, setDeletingLecture] = useState<LectureItem | null>(null);
+  const [internalEditingLecture, setInternalEditingLecture] = useState<LectureItem | null>(null);
+
+  const handleOpenEdit = (lecture: LectureItem) => {
+    if (onEditLecture) {
+      onEditLecture(lecture);
+    } else {
+      setInternalEditingLecture(lecture);
+    }
+  };
 
   const handleOpenDelete = (lecture: LectureItem) => {
     setDeletingLecture(lecture);
@@ -68,55 +94,52 @@ export const LecturesTable = React.memo(function LecturesTable({
           paginationMeta
             ? {
                 page: paginationMeta.page,
-                limit: paginationMeta.limit,
-                total: paginationMeta.total,
                 totalPages: paginationMeta.totalPages,
                 hasNextPage: paginationMeta.hasNextPage,
                 hasPrevPage: paginationMeta.hasPrevPage,
-                onPageChange: setPage,
-                onLimitChange: setLimit,
+                onPageChange: handlePageChange,
                 isLoading,
               }
             : undefined
         }
       >
-        <Table className="min-w-[800px]">
+        <Table className="min-w-[700px]">
           <TableHeader>
             <TableRow>
               <TableHead>Date & Time</TableHead>
               <TableHead>Class & Room</TableHead>
               <TableHead>Teacher</TableHead>
-              <TableHead>Roll Call Status</TableHead>
               <TableHead>Notes</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableSkeletonRows columns={6} rows={limit} hasAvatar={false} />
+              <TableSkeletonRows columns={5} rows={5} hasAvatar={false} />
             ) : lectures.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-12 text-center text-neutral-500">
+                <TableCell colSpan={5} className="py-12 text-center text-neutral-500">
                   <CalendarDays className="h-8 w-8 mx-auto text-neutral-400 mb-2" />
                   <p className="font-semibold text-neutral-700 dark:text-neutral-300">
                     No lectures scheduled yet
                   </p>
                   <p className="text-xs text-neutral-400 mt-1 max-w-xs mx-auto">
-                    Schedule a class lecture with a date and unique start time to begin taking roll call.
+                    Schedule a class lecture with a date and unique start time to manage your course sessions.
                   </p>
-                  <Button
-                    size="sm"
-                    className="mt-4 gap-1.5"
-                    onClick={() => onOpenCreateLecture()}
-                  >
-                    <Plus className="h-4 w-4" />
-                    Schedule First Lecture
-                  </Button>
+                  {onOpenCreateLecture && (
+                    <Button
+                      size="sm"
+                      className="mt-4 gap-1.5"
+                      onClick={() => onOpenCreateLecture()}
+                    >
+                      <Plus className="h-4 w-4" />
+                      Schedule First Lecture
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             ) : (
               lectures.map((lecture) => {
-                const summary = lecture.attendanceSummary;
                 return (
                   <TableRow
                     key={lecture.id}
@@ -162,35 +185,8 @@ export const LecturesTable = React.memo(function LecturesTable({
                       )}
                     </TableCell>
 
-                    {/* Roll Call Summary */}
-                    <TableCell className="whitespace-nowrap">
-                      {summary && summary.total > 0 ? (
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-xs">
-                            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                              <span>{summary.present} Present</span>
-                            </span>
-                            {summary.absent > 0 && (
-                              <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400 font-medium">
-                                <XCircle className="h-3.5 w-3.5" />
-                                <span>{summary.absent} Absent</span>
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-[11px] text-neutral-400">
-                            Total {summary.total} enrolled
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/40">
-                          Pending Roll Call
-                        </span>
-                      )}
-                    </TableCell>
-
                     {/* Notes */}
-                    <TableCell className="text-xs text-neutral-500 max-w-[200px] truncate">
+                    <TableCell className="text-xs text-neutral-500 max-w-[240px] truncate">
                       {lecture.notes || "—"}
                     </TableCell>
 
@@ -199,12 +195,12 @@ export const LecturesTable = React.memo(function LecturesTable({
                       <div className="flex items-center justify-end gap-1.5">
                         <Button
                           size="sm"
-                          className="h-8 px-2.5 text-xs gap-1.5 shadow-xs"
-                          onClick={() => onTakeAttendance(lecture)}
-                          title="Take attendance roll call"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+                          onClick={() => handleOpenEdit(lecture)}
+                          title="Edit lecture"
                         >
-                          <UserCheck className="h-3.5 w-3.5" />
-                          <span>Roll Call</span>
+                          <Edit className="h-4 w-4" />
                         </Button>
                         <DeleteIconButton
                           onClick={() => handleOpenDelete(lecture)}
@@ -220,6 +216,12 @@ export const LecturesTable = React.memo(function LecturesTable({
           </TableBody>
         </Table>
       </DataTableContainer>
+
+      <EditLectureModal
+        lecture={internalEditingLecture}
+        isOpen={Boolean(internalEditingLecture)}
+        onClose={() => setInternalEditingLecture(null)}
+      />
 
       <DeleteLectureDialog
         lecture={deletingLecture}

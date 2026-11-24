@@ -55,6 +55,7 @@ export class StudentsRepository {
     isActive?: boolean;
     page?: number;
     limit?: number;
+    teacherId?: string;
   }): Promise<{ items: StudentResponse[]; total: number }> {
     const where: Prisma.StudentWhereInput = {};
 
@@ -72,7 +73,17 @@ export class StudentsRepository {
       ];
     }
 
-    if (filters?.classId) {
+    if (filters?.teacherId) {
+      where.enrollments = {
+        some: {
+          ...(filters.classId ? { classId: filters.classId } : {}),
+          class: {
+            teacherId: filters.teacherId,
+          },
+          status: "ACTIVE",
+        },
+      };
+    } else if (filters?.classId) {
       where.enrollments = {
         some: {
           classId: filters.classId,
@@ -88,8 +99,6 @@ export class StudentsRepository {
       };
     }
 
-    const total = await prisma.student.count({ where });
-
     const include = {
       enrollments: {
         include: {
@@ -104,23 +113,24 @@ export class StudentsRepository {
       },
     };
 
-    let students;
-    if (filters?.page && filters?.limit) {
-      const skip = (filters.page - 1) * filters.limit;
-      students = await prisma.student.findMany({
-        where,
-        skip,
-        take: filters.limit,
-        include,
-        orderBy: { fullName: "asc" },
-      });
-    } else {
-      students = await prisma.student.findMany({
-        where,
-        include,
-        orderBy: { fullName: "asc" },
-      });
-    }
+    const countPromise = prisma.student.count({ where });
+    const limit = filters?.limit || 10;
+    const findPromise =
+      filters?.page
+        ? prisma.student.findMany({
+            where,
+            skip: (filters.page - 1) * limit,
+            take: limit,
+            include,
+            orderBy: { fullName: "asc" },
+          })
+        : prisma.student.findMany({
+            where,
+            include,
+            orderBy: { fullName: "asc" },
+          });
+
+    const [total, students] = await Promise.all([countPromise, findPromise]);
 
     return {
       items: students.map(formatStudentResponse),
@@ -258,6 +268,35 @@ export class StudentsRepository {
       prisma.enrollment.deleteMany({ where: { studentId: id } }),
       prisma.student.delete({ where: { id } }),
     ]);
+  }
+
+  async getMetrics(teacherId?: string): Promise<{
+    total: number;
+    active: number;
+    inactive: number;
+    totalEnrollments: number;
+  }> {
+    const studentWhere: Prisma.StudentWhereInput = teacherId
+      ? { enrollments: { some: { class: { teacherId }, status: "ACTIVE" } } }
+      : {};
+
+    const [total, active, totalEnrollments] = await Promise.all([
+      prisma.student.count({ where: studentWhere }),
+      prisma.student.count({ where: { ...studentWhere, isActive: true } }),
+      prisma.enrollment.count({
+        where: {
+          ...(teacherId ? { class: { teacherId } } : {}),
+          status: "ACTIVE",
+        },
+      }),
+    ]);
+
+    return {
+      total,
+      active,
+      inactive: total - active,
+      totalEnrollments,
+    };
   }
 }
 

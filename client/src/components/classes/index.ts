@@ -6,6 +6,7 @@ export { CreateClassModal } from "./CreateClassModal";
 export { EditClassModal } from "./EditClassModal";
 export { DeleteClassDialog } from "./DeleteClassDialog";
 export { CreateLectureModal } from "./CreateLectureModal";
+export { EditLectureModal } from "./EditLectureModal";
 export { DeleteLectureDialog } from "./DeleteLectureDialog";
 export { LecturesTable } from "./LecturesTable";
 export { TakeAttendanceModal } from "./TakeAttendanceModal";

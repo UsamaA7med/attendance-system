@@ -11,8 +11,8 @@ import {
 
 const router = Router();
 
-// Authentication and Admin / Staff authorization
-router.use(authenticate, authorize("admin", "staff"));
+// Authentication and Admin / Staff / Teacher authorization
+router.use(authenticate, authorize("admin", "staff", "teacher"));
 
 // Lectures Endpoints
 router.get("/", validate({ query: queryLectureSchema }), lecturesController.getAll);

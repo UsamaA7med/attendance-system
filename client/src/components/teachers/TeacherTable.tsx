@@ -50,7 +50,7 @@ export const TeacherTable = React.memo(function TeacherTable({
         </TableHeader>
         <TableBody>
           {isLoading ? (
-            <TableSkeletonRows columns={5} rows={pagination?.limit || 5} hasAvatar={true} />
+            <TableSkeletonRows columns={5} rows={5} hasAvatar={true} />
           ) : teachers.length === 0 ? (
             <TableRow>
               <TableCell colSpan={5} className="py-12 text-center text-neutral-500">

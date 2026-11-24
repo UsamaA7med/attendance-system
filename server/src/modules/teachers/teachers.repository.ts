@@ -68,8 +68,6 @@ class TeachersRepository {
       ];
     }
 
-    const total = await prisma.user.count({ where });
-
     const include = {
       taughtClasses: {
         select: {
@@ -82,23 +80,24 @@ class TeachersRepository {
       },
     };
 
-    let users;
-    if (filters?.page && filters?.limit) {
-      const skip = (filters.page - 1) * filters.limit;
-      users = await prisma.user.findMany({
-        where,
-        skip,
-        take: filters.limit,
-        include,
-        orderBy: { createdAt: "desc" },
-      });
-    } else {
-      users = await prisma.user.findMany({
-        where,
-        include,
-        orderBy: { createdAt: "desc" },
-      });
-    }
+    const countPromise = prisma.user.count({ where });
+    const limit = filters?.limit || 10;
+    const findPromise =
+      filters?.page
+        ? prisma.user.findMany({
+            where,
+            skip: (filters.page - 1) * limit,
+            take: limit,
+            include,
+            orderBy: { createdAt: "desc" },
+          })
+        : prisma.user.findMany({
+            where,
+            include,
+            orderBy: { createdAt: "desc" },
+          });
+
+    const [total, users] = await Promise.all([countPromise, findPromise]);
 
     return {
       items: users.map(formatTeacherResponse),
@@ -206,6 +205,24 @@ class TeachersRepository {
     await prisma.user.delete({
       where: { id },
     });
+  }
+
+  async getMetrics(): Promise<{
+    totalCount: number;
+    activeCount: number;
+    totalClassesAssigned: number;
+  }> {
+    const [totalCount, activeCount, totalClassesAssigned] = await Promise.all([
+      prisma.user.count({ where: { role: Role.TEACHER } }),
+      prisma.user.count({ where: { role: Role.TEACHER, isActive: true } }),
+      prisma.class.count({ where: { isActive: true } }),
+    ]);
+
+    return {
+      totalCount,
+      activeCount,
+      totalClassesAssigned,
+    };
   }
 }
 

@@ -1,18 +1,18 @@
 import { useState } from "react";
-import { NavLink, useLocation, useNavigate, Outlet } from "react-router-dom";
+import { NavLink, useLocation, useNavigate, Outlet, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   CalendarCheck,
-  LayoutDashboard,
+  CalendarDays,
   GraduationCap,
   BookOpen,
   ClipboardCheck,
   Users,
+  ShieldCheck,
   Menu,
   X,
-  Sparkles,
   LogOut,
 } from "lucide-react";
 
@@ -27,56 +27,114 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const { user, logout } = useAuthStore();
   const isAdmin = user?.role?.toLowerCase() === "admin";
+  const isTeacher = user?.role?.toLowerCase() === "teacher";
 
-  const navItems = [
-    {
-      title: "Dashboard",
-      path: "/",
-      icon: LayoutDashboard,
-      badge: null,
-    },
-    {
-      title: "Attendance",
-      path: "/attendance",
-      icon: ClipboardCheck,
-      badge: null,
-    },
-    {
-      title: "Students",
-      path: "/students",
-      icon: Users,
-      badge: null,
-    },
-    ...(isAdmin
-      ? [
-          {
-            title: "Classes",
-            path: "/classes",
-            icon: BookOpen,
-            badge: null,
-          },
-          {
-            title: "Teachers",
-            path: "/teachers",
-            icon: GraduationCap,
-            badge: null,
-          },
-        ]
-      : []),
-  ];
+  // Redirect root path (/) to appropriate landing view
+  if (location.pathname === "/") {
+    return <Navigate to={isTeacher ? "/classes" : "/attendance"} replace />;
+  }
+
+  const navItems = isTeacher
+    ? [
+        {
+          title: "Classes",
+          path: "/classes",
+          icon: BookOpen,
+          badge: null,
+        },
+        {
+          title: "Lectures",
+          path: "/lectures",
+          icon: CalendarDays,
+          badge: null,
+        },
+        {
+          title: "Attendance",
+          path: "/attendance",
+          icon: ClipboardCheck,
+          badge: null,
+        },
+        {
+          title: "Students",
+          path: "/students",
+          icon: Users,
+          badge: null,
+        },
+      ]
+    : isAdmin
+    ? [
+        {
+          title: "Attendance",
+          path: "/attendance",
+          icon: ClipboardCheck,
+          badge: null,
+        },
+        {
+          title: "Classes",
+          path: "/classes",
+          icon: BookOpen,
+          badge: null,
+        },
+        {
+          title: "Lectures",
+          path: "/lectures",
+          icon: CalendarDays,
+          badge: null,
+        },
+        {
+          title: "Students",
+          path: "/students",
+          icon: Users,
+          badge: null,
+        },
+        {
+          title: "Teachers",
+          path: "/teachers",
+          icon: GraduationCap,
+          badge: null,
+        },
+        {
+          title: "Staff",
+          path: "/staff",
+          icon: ShieldCheck,
+          badge: null,
+        },
+      ]
+    : [
+        {
+          title: "Attendance",
+          path: "/attendance",
+          icon: ClipboardCheck,
+          badge: null,
+        },
+        {
+          title: "Lectures",
+          path: "/lectures",
+          icon: CalendarDays,
+          badge: null,
+        },
+        {
+          title: "Students",
+          path: "/students",
+          icon: Users,
+          badge: null,
+        },
+      ];
 
   const getPageTitle = () => {
     switch (location.pathname) {
-      case "/":
-        return "Dashboard";
       case "/attendance":
-        return "Student Attendance";
+        return isTeacher ? "My Class Attendance" : "Student Attendance";
       case "/students":
-        return "Students Directory";
+        return isTeacher ? "My Students" : "Students Directory";
       case "/classes":
-        return "Classes & Lectures";
+        return isTeacher ? "My Classes" : "Classes";
+      case "/lectures":
+        return isTeacher ? "My Lectures" : "Lectures";
       case "/teachers":
         return "Teachers Management";
+      case "/staff":
+        return "Staff Management";
       default:
         return "Attendance Hub";
     }
@@ -107,9 +165,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <CalendarCheck className="h-5 w-5" />
           </div>
           <div>
-            <div className="flex items-center gap-1.5 font-bold text-base tracking-tight text-neutral-900 dark:text-neutral-50">
-              <span>Attendance Hub</span>
-              <Sparkles className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+            <div className="font-bold text-base tracking-tight text-neutral-900 dark:text-neutral-50">
+              Attendance Hub
             </div>
             <p className="text-xs text-neutral-500 dark:text-neutral-400">
               Educational Center Portal
