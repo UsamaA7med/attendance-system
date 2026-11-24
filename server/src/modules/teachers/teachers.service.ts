@@ -12,13 +12,31 @@ import {
   NotFoundError,
   BadRequestError,
 } from "../../core/errors/app-error.js";
+import { PaginationMeta } from "../../core/utils/api-response.js";
 
 export class TeachersService {
-  async getAllTeachers(query?: QueryTeacherDto): Promise<TeacherResponse[]> {
-    return teachersRepository.findAll({
-      search: query?.search,
-      isActive: query?.isActive,
-    });
+  async getAllTeachers(query?: QueryTeacherDto): Promise<{
+    items: TeacherResponse[];
+    pagination?: PaginationMeta;
+  }> {
+    const { items, total } = await teachersRepository.findAll(query);
+
+    if (query?.page && query?.limit) {
+      const totalPages = Math.ceil(total / query.limit) || 1;
+      return {
+        items,
+        pagination: {
+          page: query.page,
+          limit: query.limit,
+          total,
+          totalPages,
+          hasNextPage: query.page < totalPages,
+          hasPrevPage: query.page > 1,
+        },
+      };
+    }
+
+    return { items };
   }
 
   async getTeacherById(id: string): Promise<TeacherResponse> {

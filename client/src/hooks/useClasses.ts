@@ -27,6 +27,17 @@ export function useClasses(
   });
 }
 
+export function useClassesPaginated(
+  params?: ClassQueryParams,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: classKeys.list(params),
+    queryFn: () => classesApi.getAllPaginated(params),
+    enabled: options?.enabled ?? true,
+  });
+}
+
 export function useClass(id: string) {
   return useQuery({
     queryKey: classKeys.detail(id),

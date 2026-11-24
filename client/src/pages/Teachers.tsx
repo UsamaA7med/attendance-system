@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useDeferredValue } from "react";
-import { useTeachers, useDeleteTeacher } from "@/hooks/useTeachers";
+import { useTeachers, useTeachersPaginated, useDeleteTeacher } from "@/hooks/useTeachers";
 import type { Teacher } from "@/lib/teachers.api";
 import { useAuthStore } from "@/store/useAuthStore";
 import {
@@ -18,52 +18,58 @@ export function Teachers() {
   const { user } = useAuthStore();
   const isAdmin = user?.role?.toLowerCase() === "admin";
 
-  // TanStack Query: Live Teacher Roster
-  const { data: teachers = [], isLoading } = useTeachers(undefined, {
-    enabled: isAdmin,
-  });
-
-  const deleteMutation = useDeleteTeacher();
-
   // Search & Filter States
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearch = useDeferredValue(searchQuery);
   const [statusFilter, setStatusFilter] = useState<StatusFilterOption>("all");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+    setPage(1);
+  }, []);
+
+  const handleStatusChange = useCallback((status: StatusFilterOption) => {
+    setStatusFilter(status);
+    setPage(1);
+  }, []);
+
+  const queryParams = useMemo(() => {
+    return {
+      search: deferredSearch.trim() || undefined,
+      isActive:
+        statusFilter === "active" ? true : statusFilter === "inactive" ? false : undefined,
+      page,
+      limit,
+    };
+  }, [deferredSearch, statusFilter, page, limit]);
+
+  // TanStack Query: Paginated Teacher Roster
+  const { data: teachersResponse, isLoading } = useTeachersPaginated(queryParams, {
+    enabled: isAdmin,
+  });
+  const teachers = teachersResponse?.data || [];
+  const paginationMeta = teachersResponse?.pagination;
+
+  // Unpaginated list for aggregate metrics across all pages
+  const { data: allTeachers = [] } = useTeachers(undefined, {
+    enabled: isAdmin,
+  });
+
+  const deleteMutation = useDeleteTeacher();
 
   // Modal Dialog States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
   const [deletingTeacher, setDeletingTeacher] = useState<Teacher | null>(null);
 
-  // Performance-optimized Filter Calculation
-  const filteredTeachers = useMemo(() => {
-    const query = deferredSearch.toLowerCase().trim();
-
-    return teachers.filter((teacher) => {
-      const matchesSearch =
-        !query ||
-        teacher.name.toLowerCase().includes(query) ||
-        teacher.email.toLowerCase().includes(query) ||
-        (teacher.phone && teacher.phone.includes(query)) ||
-        (teacher.department && teacher.department.toLowerCase().includes(query));
-
-      const matchesStatus =
-        statusFilter === "all"
-          ? true
-          : statusFilter === "active"
-          ? teacher.isActive
-          : !teacher.isActive;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [teachers, deferredSearch, statusFilter]);
-
   // Aggregate Metrics
-  const totalCount = teachers.length;
-  const activeCount = useMemo(() => teachers.filter((t) => t.isActive).length, [teachers]);
+  const totalCount = allTeachers.length;
+  const activeCount = useMemo(() => allTeachers.filter((t) => t.isActive).length, [allTeachers]);
   const totalClassesAssigned = useMemo(
-    () => teachers.reduce((acc, t) => acc + (t.classesCount || 0), 0),
-    [teachers]
+    () => allTeachers.reduce((acc, t) => acc + (t.classesCount || 0), 0),
+    [allTeachers]
   );
 
   // Stable callbacks for child components to prevent re-renders
@@ -115,9 +121,9 @@ export function Teachers() {
       {/* Search & Filter Controls (Memoized) */}
       <TeacherFilters
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={handleSearchChange}
         statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
+        onStatusFilterChange={handleStatusChange}
         totalCount={totalCount}
         activeCount={activeCount}
         inactiveCount={totalCount - activeCount}
@@ -125,9 +131,24 @@ export function Teachers() {
 
       {/* Roster Table (Memoized rows) */}
       <TeacherTable
-        teachers={filteredTeachers}
+        teachers={teachers}
         isLoading={isLoading}
         searchQuery={searchQuery}
+        pagination={
+          paginationMeta
+            ? {
+                page: paginationMeta.page,
+                limit: paginationMeta.limit,
+                total: paginationMeta.total,
+                totalPages: paginationMeta.totalPages,
+                hasNextPage: paginationMeta.hasNextPage,
+                hasPrevPage: paginationMeta.hasPrevPage,
+                onPageChange: setPage,
+                onLimitChange: setLimit,
+                isLoading,
+              }
+            : undefined
+        }
         onOpenAdd={handleOpenAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}

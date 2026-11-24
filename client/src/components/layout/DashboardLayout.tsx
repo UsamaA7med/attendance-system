@@ -8,6 +8,8 @@ import {
   LayoutDashboard,
   GraduationCap,
   BookOpen,
+  ClipboardCheck,
+  Users,
   Menu,
   X,
   Sparkles,
@@ -33,6 +35,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       icon: LayoutDashboard,
       badge: null,
     },
+    {
+      title: "Attendance",
+      path: "/attendance",
+      icon: ClipboardCheck,
+      badge: null,
+    },
+    {
+      title: "Students",
+      path: "/students",
+      icon: Users,
+      badge: null,
+    },
     ...(isAdmin
       ? [
           {
@@ -55,6 +69,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     switch (location.pathname) {
       case "/":
         return "Dashboard";
+      case "/attendance":
+        return "Student Attendance";
+      case "/students":
+        return "Students Directory";
       case "/classes":
         return "Classes & Lectures";
       case "/teachers":

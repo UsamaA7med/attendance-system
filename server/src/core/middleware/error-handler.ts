@@ -15,6 +15,18 @@ export function errorHandler(
     return;
   }
 
+  // Handle Prisma unique constraint violations (P2002) cleanly
+  if ((err as { code?: string }).code === "P2002") {
+    const meta = (err as { meta?: { modelName?: string } }).meta;
+    const model = meta?.modelName ? `${meta.modelName} ` : "";
+    ApiResponse.error(
+      res,
+      `${model}already exists or unique constraint was violated`,
+      409
+    );
+    return;
+  }
+
   logger.error("Unhandled Exception:", err);
 
   const isDbConfigError = err.message?.includes("DATABASE_URL");

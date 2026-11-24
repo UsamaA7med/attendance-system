@@ -2,6 +2,20 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 export const ACCESS_TOKEN_KEY = "auth_token";
 
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination?: PaginationMeta;
+}
+
 export function getAccessToken(): string | null {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
 }

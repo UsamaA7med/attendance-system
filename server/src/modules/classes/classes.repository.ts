@@ -62,7 +62,7 @@ function formatClassResponse(c: PrismaClassWithRelations): ClassResponse {
 }
 
 class ClassesRepository {
-  async findAll(filters?: ClassFilters): Promise<ClassResponse[]> {
+  async findAll(filters?: ClassFilters): Promise<{ items: ClassResponse[]; total: number }> {
     const where: Prisma.ClassWhereInput = {};
 
     if (filters?.isActive !== undefined) {
@@ -83,38 +83,57 @@ class ClassesRepository {
       ];
     }
 
-    const classes = await prisma.class.findMany({
-      where,
-      include: {
-        teacher: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            department: true,
-          },
-        },
-        lectures: {
-          select: {
-            id: true,
-            date: true,
-            startTime: true,
-          },
-          orderBy: [{ date: "desc" }, { startTime: "asc" }],
-          take: 5,
-        },
-        _count: {
-          select: {
-            enrollments: true,
-            lectures: true,
-          },
+    const total = await prisma.class.count({ where });
+
+    const include = {
+      teacher: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          department: true,
         },
       },
-      orderBy: { createdAt: "desc" },
-    });
+      lectures: {
+        select: {
+          id: true,
+          date: true,
+          startTime: true,
+        },
+        orderBy: [{ date: "desc" as const }, { startTime: "asc" as const }],
+        take: 5,
+      },
+      _count: {
+        select: {
+          enrollments: true,
+          lectures: true,
+        },
+      },
+    };
 
-    return classes.map(formatClassResponse);
+    let classes;
+    if (filters?.page && filters?.limit) {
+      const skip = (filters.page - 1) * filters.limit;
+      classes = await prisma.class.findMany({
+        where,
+        skip,
+        take: filters.limit,
+        include,
+        orderBy: { createdAt: "desc" },
+      });
+    } else {
+      classes = await prisma.class.findMany({
+        where,
+        include,
+        orderBy: { createdAt: "desc" },
+      });
+    }
+
+    return {
+      items: classes.map(formatClassResponse),
+      total,
+    };
   }
 
   async findById(id: string): Promise<ClassResponse | null> {

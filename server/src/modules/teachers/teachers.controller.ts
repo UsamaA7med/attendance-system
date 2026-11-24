@@ -7,8 +7,17 @@ export class TeachersController {
   async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const query = req.query as unknown as QueryTeacherDto;
-      const teachers = await teachersService.getAllTeachers(query);
-      ApiResponse.success(res, teachers, "Teachers retrieved successfully");
+      const result = await teachersService.getAllTeachers(query);
+      if (result.pagination) {
+        ApiResponse.paginated(
+          res,
+          result.items,
+          result.pagination,
+          "Teachers retrieved successfully"
+        );
+      } else {
+        ApiResponse.success(res, result.items, "Teachers retrieved successfully");
+      }
     } catch (error) {
       next(error);
     }

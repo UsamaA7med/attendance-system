@@ -47,4 +47,6 @@ export interface ClassFilters {
   search?: string;
   teacherId?: string;
   isActive?: boolean;
+  page?: number;
+  limit?: number;
 }

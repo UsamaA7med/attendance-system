@@ -13,6 +13,7 @@ import {
   BadRequestError,
 } from "../../core/errors/app-error.js";
 import { AttendanceStatus } from "@prisma/client";
+import { PaginationMeta } from "../../core/utils/api-response.js";
 
 export interface StudentAttendanceItem {
   id: string; // Attendance record id
@@ -27,8 +28,28 @@ export interface StudentAttendanceItem {
 }
 
 export class LecturesService {
-  async getAllLectures(query?: QueryLectureDto): Promise<LectureResponse[]> {
-    return lecturesRepository.findAll(query);
+  async getAllLectures(query?: QueryLectureDto): Promise<{
+    items: LectureResponse[];
+    pagination?: PaginationMeta;
+  }> {
+    const { items, total } = await lecturesRepository.findAll(query);
+
+    if (query?.page && query?.limit) {
+      const totalPages = Math.ceil(total / query.limit) || 1;
+      return {
+        items,
+        pagination: {
+          page: query.page,
+          limit: query.limit,
+          total,
+          totalPages,
+          hasNextPage: query.page < totalPages,
+          hasPrevPage: query.page > 1,
+        },
+      };
+    }
+
+    return { items };
   }
 
   async getLectureById(id: string): Promise<LectureResponse> {

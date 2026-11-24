@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { reportsController } from "./reports.controller.js";
-import { authenticate } from "../../core/middleware/authenticate.js";
+import { authenticate, authorize } from "../../core/middleware/authenticate.js";
 
 const router = Router();
 
-// Routes
-router.get("/overview", authenticate, reportsController.getOverview);
+// Routes — Admin and Staff only
+router.get("/overview", authenticate, authorize("admin", "staff"), reportsController.getOverview);
 
 export const reportsRouter = router;

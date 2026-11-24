@@ -47,7 +47,9 @@ class TeachersRepository {
   async findAll(filters?: {
     search?: string;
     isActive?: boolean;
-  }): Promise<TeacherResponse[]> {
+    page?: number;
+    limit?: number;
+  }): Promise<{ items: TeacherResponse[]; total: number }> {
     const where: Prisma.UserWhereInput = {
       role: Role.TEACHER,
     };
@@ -66,23 +68,42 @@ class TeachersRepository {
       ];
     }
 
-    const users = await prisma.user.findMany({
-      where,
-      include: {
-        taughtClasses: {
-          select: {
-            id: true,
-            name: true,
-            room: true,
-            isActive: true,
-          },
-          orderBy: { name: "asc" },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const total = await prisma.user.count({ where });
 
-    return users.map(formatTeacherResponse);
+    const include = {
+      taughtClasses: {
+        select: {
+          id: true,
+          name: true,
+          room: true,
+          isActive: true,
+        },
+        orderBy: { name: "asc" as const },
+      },
+    };
+
+    let users;
+    if (filters?.page && filters?.limit) {
+      const skip = (filters.page - 1) * filters.limit;
+      users = await prisma.user.findMany({
+        where,
+        skip,
+        take: filters.limit,
+        include,
+        orderBy: { createdAt: "desc" },
+      });
+    } else {
+      users = await prisma.user.findMany({
+        where,
+        include,
+        orderBy: { createdAt: "desc" },
+      });
+    }
+
+    return {
+      items: users.map(formatTeacherResponse),
+      total,
+    };
   }
 
   async findById(id: string): Promise<TeacherResponse | null> {

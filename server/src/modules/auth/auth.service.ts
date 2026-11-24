@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { usersRepository } from "../users/users.repository.js";
@@ -8,7 +9,7 @@ import { UnauthorizedError, ConflictError } from "../../core/errors/app-error.js
 import { env } from "../../config/env.js";
 import { SafeUser } from "../users/users.types.js";
 
-function parseExpiryMs(expiry: string): number {
+export function parseExpiryMs(expiry: string): number {
   const match = expiry.match(/^(\d+)([smhd])$/);
   if (!match) return 7 * 24 * 60 * 60 * 1000;
   const val = parseInt(match[1], 10);
@@ -32,6 +33,10 @@ export class AuthService {
     const user = await usersRepository.findByEmail(dto.email);
     if (!user) {
       throw new UnauthorizedError("Invalid email or password");
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedError("Account has been deactivated");
     }
 
     const isMatch = await bcrypt.compare(dto.password, user.passwordHash);
@@ -96,10 +101,16 @@ export class AuthService {
     if (!validation.valid || !validation.record) {
       // Possible token theft or replay attempt: revoke all sessions for this user
       if (validation.record?.revokedAt) {
-        await refreshTokenRepository.revokeAllForUser(decoded.userId);
-        throw new UnauthorizedError(
-          "Refresh token reuse detected. All sessions invalidated. Please sign in again."
-        );
+        const timeSinceRevocation = Date.now() - validation.record.revokedAt.getTime();
+        // If revoked more than 15 seconds ago, treat as replay attack and invalidate all sessions.
+        // If revoked within 15 seconds, treat as concurrent request / network race and reject safely.
+        if (timeSinceRevocation > 15_000) {
+          await refreshTokenRepository.revokeAllForUser(decoded.userId);
+          throw new UnauthorizedError(
+            "Refresh token reuse detected. All sessions invalidated. Please sign in again."
+          );
+        }
+        throw new UnauthorizedError("Refresh token was already used");
       }
       throw new UnauthorizedError(validation.reason || "Invalid refresh token");
     }
@@ -108,6 +119,10 @@ export class AuthService {
     const user = await usersRepository.findById(decoded.userId);
     if (!user) {
       throw new UnauthorizedError("User associated with this token no longer exists");
+    }
+    if (!user.isActive) {
+      await refreshTokenRepository.revokeAllForUser(decoded.userId);
+      throw new UnauthorizedError("Account has been deactivated");
     }
 
     // 4. Token Rotation: revoke current token and generate a fresh pair
@@ -134,15 +149,30 @@ export class AuthService {
     email: string;
     role: string;
   }): Promise<TokenPair> {
-    const accessToken = jwt.sign(payload, env.JWT_ACCESS_SECRET, {
-      expiresIn: env.JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"],
-    });
+    const tokenId = randomUUID();
+
+    const accessToken = jwt.sign(
+      {
+        userId: payload.userId,
+        email: payload.email,
+        role: payload.role,
+      },
+      env.JWT_ACCESS_SECRET,
+      {
+        expiresIn: env.JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"],
+        jwtid: randomUUID(),
+      }
+    );
 
     const refreshToken = jwt.sign(
-      { userId: payload.userId, tokenType: "refresh" },
+      {
+        userId: payload.userId,
+        tokenType: "refresh",
+      },
       env.JWT_REFRESH_SECRET,
       {
         expiresIn: env.JWT_REFRESH_EXPIRES_IN as jwt.SignOptions["expiresIn"],
+        jwtid: tokenId,
       }
     );
 

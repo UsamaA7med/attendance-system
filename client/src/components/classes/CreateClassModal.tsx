@@ -4,7 +4,7 @@ import { useCreateClass } from "@/hooks/useClasses";
 import type { Teacher } from "@/lib/teachers.api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, BookOpen, X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -43,7 +43,7 @@ export function CreateClassModal({ isOpen, onClose, teachers }: CreateClassModal
     },
   });
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     reset({
       name: "",
       room: "",
@@ -52,7 +52,7 @@ export function CreateClassModal({ isOpen, onClose, teachers }: CreateClassModal
       isActive: true,
     });
     onClose();
-  };
+  }, [reset, onClose]);
 
   // Reset form when modal opens or closes
   useEffect(() => {
@@ -75,7 +75,7 @@ export function CreateClassModal({ isOpen, onClose, teachers }: CreateClassModal
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, handleClose]);
 
   if (!isOpen) return null;
 

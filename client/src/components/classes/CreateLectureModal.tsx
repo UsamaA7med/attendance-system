@@ -4,7 +4,7 @@ import { useCreateLecture } from "@/hooks/useLectures";
 import type { ClassItem } from "@/lib/classes.api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, Clock, Users, X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -50,10 +50,10 @@ export function CreateLectureModal({
     },
   });
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     reset();
     onClose();
-  };
+  }, [reset, onClose]);
 
   // Synchronize class selection and date when modal opens
   useEffect(() => {
@@ -79,7 +79,7 @@ export function CreateLectureModal({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, handleClose]);
 
   const selectedClassId = watch("classId");
   const currentClass = classes.find((c) => c.id === selectedClassId);

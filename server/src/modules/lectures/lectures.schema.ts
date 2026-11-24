@@ -35,6 +35,19 @@ export const queryLectureSchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   search: z.string().optional(),
+  page: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .refine((val) => val === undefined || val > 0, "Page must be greater than 0"),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .refine(
+      (val) => val === undefined || (val > 0 && val <= 100),
+      "Limit must be between 1 and 100"
+    ),
 });
 
 export const updateLectureAttendanceSchema = z.object({

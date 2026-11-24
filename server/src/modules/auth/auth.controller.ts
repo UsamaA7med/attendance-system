@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { authService } from "./auth.service.js";
+import { authService, parseExpiryMs } from "./auth.service.js";
 import { ApiResponse } from "../../core/utils/api-response.js";
 import { usersService } from "../users/users.service.js";
 import { env } from "../../config/env.js";
@@ -14,7 +14,7 @@ function setRefreshCookie(res: Response, token: string): void {
     secure: isProduction || sameSite === "none",
     sameSite,
     path: "/api/auth",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+    maxAge: parseExpiryMs(env.JWT_REFRESH_EXPIRES_IN),
   });
 }
 

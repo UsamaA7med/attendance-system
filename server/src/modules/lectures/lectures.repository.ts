@@ -76,7 +76,7 @@ function formatLectureResponse(l: PrismaLectureWithRelations): LectureResponse {
 }
 
 class LecturesRepository {
-  async findAll(filters?: LectureFilters): Promise<LectureResponse[]> {
+  async findAll(filters?: LectureFilters): Promise<{ items: LectureResponse[]; total: number }> {
     const where: Prisma.LectureWhereInput = {};
 
     if (filters?.classId) {
@@ -104,39 +104,58 @@ class LecturesRepository {
       ];
     }
 
-    const lectures = await prisma.lecture.findMany({
-      where,
-      include: {
-        class: {
-          select: {
-            id: true,
-            name: true,
-            room: true,
-            teacher: {
-              select: {
-                id: true,
-                name: true,
-              },
+    const total = await prisma.lecture.count({ where });
+
+    const include = {
+      class: {
+        select: {
+          id: true,
+          name: true,
+          room: true,
+          teacher: {
+            select: {
+              id: true,
+              name: true,
             },
           },
         },
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        attendances: {
-          select: {
-            status: true,
-          },
+      },
+      createdBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
         },
       },
-      orderBy: [{ date: "desc" }, { startTime: "asc" }],
-    });
+      attendances: {
+        select: {
+          status: true,
+        },
+      },
+    };
 
-    return lectures.map(formatLectureResponse);
+    let lectures;
+    if (filters?.page && filters?.limit) {
+      const skip = (filters.page - 1) * filters.limit;
+      lectures = await prisma.lecture.findMany({
+        where,
+        skip,
+        take: filters.limit,
+        include,
+        orderBy: [{ date: "desc" }, { startTime: "asc" }],
+      });
+    } else {
+      lectures = await prisma.lecture.findMany({
+        where,
+        include,
+        orderBy: [{ date: "desc" }, { startTime: "asc" }],
+      });
+    }
+
+    return {
+      items: lectures.map(formatLectureResponse),
+      total,
+    };
   }
 
   async findById(id: string): Promise<LectureResponse | null> {

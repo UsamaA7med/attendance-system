@@ -1,4 +1,4 @@
-import { api } from "./api";
+import { api, type PaginationMeta } from "./api";
 
 export interface ClassTeacher {
   id: string;
@@ -49,12 +49,26 @@ export interface ClassQueryParams {
   search?: string;
   teacherId?: string;
   isActive?: boolean | string;
+  page?: number;
+  limit?: number;
 }
 
 export const classesApi = {
   getAll: async (params?: ClassQueryParams): Promise<ClassItem[]> => {
     const res = await api.get<{ data: ClassItem[] }>("/classes", { params });
     return res.data.data;
+  },
+
+  getAllPaginated: async (
+    params?: ClassQueryParams
+  ): Promise<{ data: ClassItem[]; pagination?: PaginationMeta }> => {
+    const res = await api.get<{ data: ClassItem[]; pagination?: PaginationMeta }>("/classes", {
+      params,
+    });
+    return {
+      data: res.data.data,
+      pagination: res.data.pagination,
+    };
   },
 
   getById: async (id: string): Promise<ClassItem> => {

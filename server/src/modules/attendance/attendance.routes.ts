@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { attendanceController } from "./attendance.controller.js";
 import { validate } from "../../core/middleware/validate.js";
+import { authenticate, authorize } from "../../core/middleware/authenticate.js";
 import {
   checkInSchema,
   checkOutSchema,
@@ -8,6 +9,9 @@ import {
 } from "./attendance.schema.js";
 
 const router = Router();
+
+// Authentication and Admin / Staff authorization enforced
+router.use(authenticate, authorize("admin", "staff"));
 
 router.get("/summary/today", attendanceController.getTodaySummary);
 router.get("/", validate({ query: attendanceQuerySchema }), attendanceController.getAll);

@@ -13,6 +13,8 @@ import { LoadingSpinner } from "@/components/ui/spinner";
 
 const Teachers = lazy(() => import("@/pages/Teachers"));
 const Classes = lazy(() => import("@/pages/Classes"));
+const Attendance = lazy(() => import("@/pages/Attendance"));
+const Students = lazy(() => import("@/pages/Students"));
 
 export default function App() {
   return (
@@ -31,6 +33,22 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<DashboardLayout />}>
               <Route path="/" element={<Dashboard />} />
+              <Route
+                path="/attendance"
+                element={
+                  <Suspense fallback={<LoadingSpinner fullPage size="lg" label="Loading attendance..." />}>
+                    <Attendance />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/students"
+                element={
+                  <Suspense fallback={<LoadingSpinner fullPage size="lg" label="Loading students..." />}>
+                    <Students />
+                  </Suspense>
+                }
+              />
 
               {/* Admin Only Routes */}
               <Route element={<AdminRoute />}>

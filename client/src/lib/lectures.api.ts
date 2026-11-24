@@ -1,4 +1,4 @@
-import { api } from "./api";
+import { api, type PaginationMeta } from "./api";
 
 export interface LectureClass {
   id: string;
@@ -55,6 +55,8 @@ export interface LectureQueryParams {
   startDate?: string;
   endDate?: string;
   search?: string;
+  page?: number;
+  limit?: number;
 }
 
 export type AttendanceStatusType = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
@@ -88,6 +90,18 @@ export const lecturesApi = {
   getAll: async (params?: LectureQueryParams): Promise<LectureItem[]> => {
     const res = await api.get<{ data: LectureItem[] }>("/lectures", { params });
     return res.data.data;
+  },
+
+  getAllPaginated: async (
+    params?: LectureQueryParams
+  ): Promise<{ data: LectureItem[]; pagination?: PaginationMeta }> => {
+    const res = await api.get<{ data: LectureItem[]; pagination?: PaginationMeta }>("/lectures", {
+      params,
+    });
+    return {
+      data: res.data.data,
+      pagination: res.data.pagination,
+    };
   },
 
   getById: async (id: string): Promise<LectureItem> => {

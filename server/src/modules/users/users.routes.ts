@@ -7,8 +7,8 @@ import { authenticate, authorize } from "../../core/middleware/authenticate.js";
 const router = Router();
 
 // Routes
-router.get("/", authenticate, usersController.getAll);
-router.get("/:id", authenticate, usersController.getById);
+router.get("/", authenticate, authorize("admin", "staff"), usersController.getAll);
+router.get("/:id", authenticate, authorize("admin", "staff"), usersController.getById);
 router.post(
   "/",
   authenticate,

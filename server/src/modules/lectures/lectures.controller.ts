@@ -7,8 +7,17 @@ export class LecturesController {
   async getAll(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const query = req.query as unknown as QueryLectureDto;
-      const lectures = await lecturesService.getAllLectures(query);
-      ApiResponse.success(res, lectures, "Lectures retrieved successfully");
+      const result = await lecturesService.getAllLectures(query);
+      if (result.pagination) {
+        ApiResponse.paginated(
+          res,
+          result.items,
+          result.pagination,
+          "Lectures retrieved successfully"
+        );
+      } else {
+        ApiResponse.success(res, result.items, "Lectures retrieved successfully");
+      }
     } catch (error) {
       next(error);
     }

@@ -32,7 +32,7 @@ export function authenticate(
 
   const token = authHeader.split(" ")[1];
   try {
-    const secret = env.JWT_ACCESS_SECRET || env.JWT_SECRET;
+    const secret = env.JWT_ACCESS_SECRET;
     const decoded = jwt.verify(token, secret) as AuthPayload;
     req.user = decoded;
     next();

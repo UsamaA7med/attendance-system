@@ -35,6 +35,19 @@ export const queryClassSchema = z.object({
     .enum(["true", "false"])
     .transform((val) => val === "true")
     .optional(),
+  page: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .refine((val) => val === undefined || val > 0, "Page must be greater than 0"),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined))
+    .refine(
+      (val) => val === undefined || (val > 0 && val <= 100),
+      "Limit must be between 1 and 100"
+    ),
 });
 
 export type CreateClassDto = z.infer<typeof createClassSchema>;

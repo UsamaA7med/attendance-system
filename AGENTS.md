@@ -20,7 +20,10 @@
   - **UI/UX Refinements & Unified Deletion**: Completed (Shared `ConfirmDeleteModal` and `DeleteIconButton` with unified rose color palette; responsive table layouts with horizontal scrolling and mobile swipe hints; spinner-free disabled action button states; skeleton roll call loading in `TakeAttendanceModal`; expanded main content layout to 1600px).
   - **Frontend Core & Auth Flow**: Completed (Register, Login, Protected Routes, Dashboard Layout, Zustand store).
   - **Vercel Cloud Deployment Setup**: Completed (Unified monorepo configuration with root `vercel.json` and `api/index.js` serverless handler, standalone `client/vercel.json` for SPA rewrites, standalone `server/vercel.json`, and dynamic CORS / cookie handling for production).
-  - **In Progress / Next Tasks**: Attendance session marking workflows, student onboarding & class enrollment UI, and reports module.
+  - **Students Management (Staff & Admin Workflow)**: Completed (Full CRUD RESTful API `/api/students` with Zod schema validation, transactional cascade integrity, and staff/admin RBAC; dedicated Students tab & `/students` directory in frontend with live aggregate metrics, search, class filter, create modal with optional enrollment, edit modal, and unified `ConfirmDeleteModal` dialog).
+  - **Attendance Flow (Dedicated Roll Call Workflow)**: Completed (Dedicated Attendance tab & `/attendance` page focused strictly on conducting student roll call across lecture sessions, date and class filters, session metrics, quick lecture scheduling, and integrated roll call modal with dynamic on-the-fly student enrollment).
+  - **Shared Data Table & Server-Side Pagination**: Completed (Comprehensive pagination infrastructure: backend `ApiResponse.paginated` envelope with `PaginationMeta` across `/api/students`, `/api/teachers`, `/api/classes`, and `/api/lectures`; reusable shadcn-style `Table` primitives in `client/src/components/ui/table.tsx`; reusable `DataTablePagination` and `DataTableContainer` in `client/src/components/common/`; fully wired with server-driven pagination across `Students`, `Teachers`, `Classes`, `LecturesTable`, and `Attendance`).
+  - **In Progress / Next Tasks**: Reports module and analytics exports.
 
 ---
 
@@ -50,6 +53,7 @@ server/src/
 │   ├── teachers/            # Controller, Service, Repository, Routes, Schema, Types
 │   ├── classes/             # Controller, Service, Repository, Routes, Schema, Types
 │   ├── lectures/            # Controller, Service, Repository, Routes, Schema, Types
+│   ├── students/            # Controller, Service, Repository, Routes, Schema, Types
 │   ├── attendance/          # Controller, Service, Repository, Routes, Schema, Types
 │   └── reports/             # Controller, Service, Routes
 ├── app.ts                   # Express application setup & middleware stack

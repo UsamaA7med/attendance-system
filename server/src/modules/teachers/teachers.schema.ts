@@ -44,6 +44,8 @@ export const queryTeacherSchema = z.object({
       if (val === "false") return false;
       return undefined;
     }),
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
 });
 
 export type CreateTeacherDto = z.infer<typeof createTeacherSchema>;

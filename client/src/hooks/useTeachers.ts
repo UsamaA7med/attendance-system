@@ -27,6 +27,17 @@ export function useTeachers(
   });
 }
 
+export function useTeachersPaginated(
+  params?: TeacherQueryParams,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: teacherKeys.list(params),
+    queryFn: () => teachersApi.getAllPaginated(params),
+    enabled: options?.enabled ?? true,
+  });
+}
+
 export function useTeacher(id: string) {
   return useQuery({
     queryKey: teacherKeys.detail(id),

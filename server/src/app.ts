@@ -18,6 +18,7 @@ import { classesRouter } from "./modules/classes/index.js";
 import { lecturesRouter } from "./modules/lectures/index.js";
 import { attendanceRouter } from "./modules/attendance/index.js";
 import { reportsRouter } from "./modules/reports/index.js";
+import { studentsRouter } from "./modules/students/index.js";
 
 export function createApp(): Express {
   const app = express();
@@ -97,6 +98,7 @@ export function createApp(): Express {
   app.use("/api/lectures", lecturesRouter);
   app.use("/api/attendance", attendanceRouter);
   app.use("/api/reports", reportsRouter);
+  app.use("/api/students", studentsRouter);
 
   // Fallback 404 & Global Error Handling
   app.use(notFoundHandler);

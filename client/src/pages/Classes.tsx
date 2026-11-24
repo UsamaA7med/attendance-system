@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useDeferredValue } from "react";
-import { useClasses, useDeleteClass } from "@/hooks/useClasses";
+import { useClasses, useClassesPaginated, useDeleteClass } from "@/hooks/useClasses";
 import { useTeachers } from "@/hooks/useTeachers";
 import type { ClassItem } from "@/lib/classes.api";
 import type { LectureItem } from "@/lib/lectures.api";
@@ -23,13 +23,6 @@ export function Classes() {
   const { user } = useAuthStore();
   const isAdmin = user?.role?.toLowerCase() === "admin";
 
-  // Data fetching with TanStack Query
-  const { data: classes = [], isLoading } = useClasses(undefined, { enabled: isAdmin });
-
-  const { data: teachers = [] } = useTeachers(undefined, { enabled: isAdmin });
-
-  const deleteMutation = useDeleteClass();
-
   // Tab state: "classes" | "lectures"
   const [activeTab, setActiveTab] = useState<"classes" | "lectures">("classes");
 
@@ -38,6 +31,50 @@ export function Classes() {
   const deferredSearch = useDeferredValue(searchQuery);
   const [statusFilter, setStatusFilter] = useState<StatusFilterOption>("all");
   const [teacherFilter, setTeacherFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+    setPage(1);
+  }, []);
+
+  const handleStatusChange = useCallback((status: StatusFilterOption) => {
+    setStatusFilter(status);
+    setPage(1);
+  }, []);
+
+  const handleTeacherChange = useCallback((teacherId: string) => {
+    setTeacherFilter(teacherId);
+    setPage(1);
+  }, []);
+
+  const queryParams = useMemo(() => {
+    return {
+      search: deferredSearch.trim() || undefined,
+      teacherId: teacherFilter !== "all" ? teacherFilter : undefined,
+      isActive:
+        statusFilter === "active" ? true : statusFilter === "inactive" ? false : undefined,
+      page,
+      limit,
+    };
+  }, [deferredSearch, statusFilter, teacherFilter, page, limit]);
+
+  // Paginated query for classes table
+  const { data: classesResponse, isLoading } = useClassesPaginated(queryParams, {
+    enabled: isAdmin,
+  });
+  const classes = classesResponse?.data || [];
+  const paginationMeta = classesResponse?.pagination;
+
+  // Unpaginated query for aggregate metrics across all pages
+  const { data: allClasses = [] } = useClasses(undefined, {
+    enabled: isAdmin,
+  });
+
+  const { data: teachers = [] } = useTeachers(undefined, { enabled: isAdmin });
+
+  const deleteMutation = useDeleteClass();
 
   // Class Modal States
   const [isAddClassModalOpen, setIsAddClassModalOpen] = useState(false);
@@ -49,45 +86,19 @@ export function Classes() {
   const [lectureTargetClassId, setLectureTargetClassId] = useState<string | null>(null);
   const [attendanceLectureId, setAttendanceLectureId] = useState<string | null>(null);
 
-  // Filter calculation
-  const filteredClasses = useMemo(() => {
-    const query = deferredSearch.toLowerCase().trim();
-
-    return classes.filter((cls) => {
-      const matchesSearch =
-        !query ||
-        cls.name.toLowerCase().includes(query) ||
-        (cls.room && cls.room.toLowerCase().includes(query)) ||
-        (cls.teacher && cls.teacher.name.toLowerCase().includes(query)) ||
-        (cls.description && cls.description.toLowerCase().includes(query));
-
-      const matchesStatus =
-        statusFilter === "all"
-          ? true
-          : statusFilter === "active"
-          ? cls.isActive
-          : !cls.isActive;
-
-      const matchesTeacher =
-        teacherFilter === "all" ? true : cls.teacherId === teacherFilter;
-
-      return matchesSearch && matchesStatus && matchesTeacher;
-    });
-  }, [classes, deferredSearch, statusFilter, teacherFilter]);
-
   // Aggregate Metrics
-  const totalClasses = classes.length;
+  const totalClasses = allClasses.length;
   const activeClasses = useMemo(
-    () => classes.filter((c) => c.isActive).length,
-    [classes]
+    () => allClasses.filter((c) => c.isActive).length,
+    [allClasses]
   );
   const totalLectures = useMemo(
-    () => classes.reduce((acc, c) => acc + (c.lecturesCount || 0), 0),
-    [classes]
+    () => allClasses.reduce((acc, c) => acc + (c.lecturesCount || 0), 0),
+    [allClasses]
   );
   const totalEnrollments = useMemo(
-    () => classes.reduce((acc, c) => acc + (c.enrollmentsCount || 0), 0),
-    [classes]
+    () => allClasses.reduce((acc, c) => acc + (c.enrollmentsCount || 0), 0),
+    [allClasses]
   );
 
   // Callbacks
@@ -214,18 +225,33 @@ export function Classes() {
         <div className="space-y-4">
           <ClassFilters
             searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
+            onSearchChange={handleSearchChange}
             statusFilter={statusFilter}
-            onStatusChange={setStatusFilter}
+            onStatusChange={handleStatusChange}
             teacherFilter={teacherFilter}
-            onTeacherChange={setTeacherFilter}
+            onTeacherChange={handleTeacherChange}
             teachers={teachers}
           />
 
           <ClassTable
-            classes={filteredClasses}
+            classes={classes}
             isLoading={isLoading}
             searchQuery={searchQuery}
+            pagination={
+              paginationMeta
+                ? {
+                    page: paginationMeta.page,
+                    limit: paginationMeta.limit,
+                    total: paginationMeta.total,
+                    totalPages: paginationMeta.totalPages,
+                    hasNextPage: paginationMeta.hasNextPage,
+                    hasPrevPage: paginationMeta.hasPrevPage,
+                    onPageChange: setPage,
+                    onLimitChange: setLimit,
+                    isLoading,
+                  }
+                : undefined
+            }
             onOpenAdd={handleOpenAddClass}
             onEdit={handleEditClass}
             onDelete={handleDeleteClass}

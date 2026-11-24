@@ -21,6 +21,7 @@ function toDomainUser(prismaUser: {
   passwordHash: string;
   phone?: string | null;
   role: Role;
+  isActive: boolean;
   createdAt: Date;
 }): User {
   return {
@@ -30,6 +31,7 @@ function toDomainUser(prismaUser: {
     passwordHash: prismaUser.passwordHash,
     phone: prismaUser.phone,
     role: fromPrismaRole(prismaUser.role),
+    isActive: prismaUser.isActive,
     createdAt: prismaUser.createdAt.toISOString(),
   };
 }

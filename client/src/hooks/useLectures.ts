@@ -31,6 +31,17 @@ export function useLectures(
   });
 }
 
+export function useLecturesPaginated(
+  params?: LectureQueryParams,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: lectureKeys.list(params),
+    queryFn: () => lecturesApi.getAllPaginated(params),
+    enabled: options?.enabled ?? true,
+  });
+}
+
 export function useLecture(id: string) {
   return useQuery({
     queryKey: lectureKeys.detail(id),
