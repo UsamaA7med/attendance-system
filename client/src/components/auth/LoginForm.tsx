@@ -8,7 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertCircle,
   Lock,
-  LogIn,
   Mail,
 } from "lucide-react";
 import React from "react";
@@ -121,10 +120,7 @@ export const LoginForm = React.memo(function LoginForm() {
           {isSubmitting ? (
             "Signing In..."
           ) : (
-            <>
-              <LogIn className="h-4 w-4" />
-              Sign In
-            </>
+            "Sign In"
           )}
         </Button>
       </CardFooter>

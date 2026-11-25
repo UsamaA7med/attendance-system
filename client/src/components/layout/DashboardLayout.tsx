@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   LogOut,
+  LoaderCircle,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -23,6 +24,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -162,11 +164,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const handleLogout = async () => {
-    await logout();
-    toast.success("Signed out", {
-      description: "You have been signed out.",
-    });
-    navigate("/login", { replace: true });
+    if (isSigningOut) return;
+
+    setIsSigningOut(true);
+    try {
+      await logout();
+      toast.success("Signed out", {
+        description: "You have been signed out.",
+      });
+      navigate("/login", { replace: true });
+    } finally {
+      setIsSigningOut(false);
+    }
   };
 
   const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
@@ -260,10 +269,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white p-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-rose-400 dark:hover:bg-rose-950/30 transition-colors"
+            disabled={isSigningOut}
+            className="w-full flex items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white p-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-800 dark:bg-neutral-900 dark:text-rose-400 dark:hover:bg-rose-950/30 transition-colors"
           >
-            <LogOut className="h-3.5 w-3.5" />
-            Sign Out
+            {isSigningOut ? (
+              <>
+                <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                Signing Out...
+              </>
+            ) : (
+              <>
+                <LogOut className="h-3.5 w-3.5" />
+                Sign Out
+              </>
+            )}
           </button>
         </div>
       </div>
