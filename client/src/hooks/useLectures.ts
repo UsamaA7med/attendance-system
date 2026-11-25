@@ -8,6 +8,7 @@ import {
   type UpdateLectureAttendancePayload,
 } from "@/lib/lectures.api";
 import { classKeys } from "./useClasses";
+import { getFriendlyErrorDescription } from "@/lib/toast-errors";
 import { toast } from "sonner";
 
 export const lectureKeys = {
@@ -67,15 +68,17 @@ export function useCreateLecture() {
     onSuccess: (newLecture: LectureItem) => {
       queryClient.invalidateQueries({ queryKey: lectureKeys.all });
       queryClient.invalidateQueries({ queryKey: classKeys.all });
-      toast.success("Lecture created successfully", {
-        description: `Lecture for "${newLecture.class.name}" on ${newLecture.date} at ${newLecture.startTime} created.`,
+      toast.success("Lecture scheduled", {
+        description: `"${newLecture.class.name}" on ${newLecture.date} at ${newLecture.startTime}.`,
       });
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to create lecture";
-      toast.error("Failed to create lecture", { description: message });
+      toast.error("Couldn't schedule lecture", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please check the lecture details and try again.",
+          conflict: "A lecture is already scheduled for this class at that date and time.",
+        }),
+      });
     },
   });
 }
@@ -89,13 +92,15 @@ export function useUpdateLecture() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: lectureKeys.all });
       queryClient.invalidateQueries({ queryKey: classKeys.all });
-      toast.success("Lecture updated successfully");
+      toast.success("Lecture details updated");
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to update lecture";
-      toast.error("Failed to update lecture", { description: message });
+      toast.error("Couldn't update lecture", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please review the changes and try again.",
+          conflict: "A lecture is already scheduled for this class at that date and time.",
+        }),
+      });
     },
   });
 }
@@ -108,13 +113,14 @@ export function useDeleteLecture() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: lectureKeys.all });
       queryClient.invalidateQueries({ queryKey: classKeys.all });
-      toast.success("Lecture deleted successfully");
+      toast.success("Lecture deleted");
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to delete lecture";
-      toast.error("Failed to delete lecture", { description: message });
+      toast.error("Couldn't delete lecture", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please try again.",
+        }),
+      });
     },
   });
 }
@@ -135,15 +141,16 @@ export function useUpdateLectureAttendance() {
         queryKey: lectureKeys.attendance(variables.lectureId),
       });
       queryClient.invalidateQueries({ queryKey: lectureKeys.all });
-      toast.success("Attendance saved successfully", {
+      toast.success("Attendance saved", {
         description: "Student roll-call statuses have been recorded.",
       });
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to save attendance";
-      toast.error("Failed to save attendance", { description: message });
+      toast.error("Couldn't save attendance", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please review the attendance and try again.",
+        }),
+      });
     },
   });
 }

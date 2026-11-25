@@ -233,7 +233,7 @@ export function CreateClassModal({ isOpen, onClose, teachers }: CreateClassModal
             <Button
               type="submit"
               size="sm"
-              disabled={isSubmitting || teachers.length === 0}
+              disabled={isSubmitting || (!isTeacher && teachers.length === 0)}
               className="gap-1.5"
             >
               {isSubmitting ? "Creating Class..." : "Create Class"}

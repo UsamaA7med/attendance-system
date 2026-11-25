@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import { getFriendlyErrorDescription } from "@/lib/toast-errors";
 import { useAuthStore, type AuthUser } from "@/store/useAuthStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -51,24 +52,19 @@ export const LoginForm = React.memo(function LoginForm() {
       const { user, accessToken } = response.data.data;
       setAuth(user, accessToken);
 
-      toast.success("Signed in successfully!", {
-        description: `Welcome back, ${user.name}! Access granted.`,
+      toast.success("Signed in", {
+        description: `Welcome back, ${user.name}.`,
       });
 
       const destination = user.role?.toLowerCase() === "teacher" ? "/classes" : "/attendance";
       navigate(destination, { replace: true });
-    } catch (err: unknown) {
-      const error = err as {
-        response?: { data?: { message?: string } };
-        message?: string;
-      };
-      const message =
-        error.response?.data?.message ||
-        error.message ||
-        "Invalid email or password. Please try again.";
-
-      toast.error("Authentication Failed", {
-        description: message,
+    } catch (error: unknown) {
+      toast.error("Couldn't sign in", {
+        description: getFriendlyErrorDescription(error, {
+          fallback: "Please check your sign-in details and try again.",
+          unauthorized:
+            "Your sign-in details may be incorrect, or this account may be inactive. Please check with your administrator if needed.",
+        }),
       });
     }
   };

@@ -9,6 +9,7 @@ import {
 } from "@/lib/students.api";
 import { lectureKeys } from "@/hooks/useLectures";
 import { classKeys } from "@/hooks/useClasses";
+import { getFriendlyErrorDescription } from "@/lib/toast-errors";
 import { toast } from "sonner";
 
 export const studentKeys = {
@@ -67,15 +68,16 @@ export function useCreateStudent() {
       queryClient.invalidateQueries({ queryKey: studentKeys.all });
       queryClient.invalidateQueries({ queryKey: lectureKeys.all });
       queryClient.invalidateQueries({ queryKey: classKeys.all });
-      toast.success("Student added successfully", {
+      toast.success("Student added", {
         description: `"${newStudent.fullName}" is now registered.`,
       });
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to create student";
-      toast.error("Failed to add student", { description: message });
+      toast.error("Couldn't add student", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please check the student details and try again.",
+        }),
+      });
     },
   });
 }
@@ -89,15 +91,17 @@ export function useEnrollStudent() {
       queryClient.invalidateQueries({ queryKey: studentKeys.all });
       queryClient.invalidateQueries({ queryKey: lectureKeys.all });
       queryClient.invalidateQueries({ queryKey: classKeys.all });
-      toast.success("Student enrolled successfully", {
+      toast.success("Student enrolled", {
         description: `"${student.fullName}" is now enrolled in this class.`,
       });
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to enroll student";
-      toast.error("Failed to enroll student", { description: message });
+      toast.error("Couldn't enroll student", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please check the class and student details, then try again.",
+          conflict: "This student may already be enrolled in the selected class. Refresh and check the class roster.",
+        }),
+      });
     },
   });
 }
@@ -112,15 +116,16 @@ export function useUpdateStudent() {
       queryClient.invalidateQueries({ queryKey: studentKeys.all });
       queryClient.invalidateQueries({ queryKey: lectureKeys.all });
       queryClient.invalidateQueries({ queryKey: classKeys.all });
-      toast.success("Student updated successfully", {
+      toast.success("Student details updated", {
         description: `Changes to "${updated.fullName}" have been saved.`,
       });
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to update student";
-      toast.error("Failed to update student", { description: message });
+      toast.error("Couldn't update student", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please review the changes and try again.",
+        }),
+      });
     },
   });
 }
@@ -134,15 +139,16 @@ export function useDeleteStudent() {
       queryClient.invalidateQueries({ queryKey: studentKeys.all });
       queryClient.invalidateQueries({ queryKey: lectureKeys.all });
       queryClient.invalidateQueries({ queryKey: classKeys.all });
-      toast.success("Student deleted successfully", {
+      toast.success("Student deleted", {
         description: "The student record has been removed.",
       });
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to delete student";
-      toast.error("Failed to delete student", { description: message });
+      toast.error("Couldn't delete student", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please try again.",
+        }),
+      });
     },
   });
 }

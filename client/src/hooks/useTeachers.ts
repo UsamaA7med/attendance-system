@@ -6,6 +6,7 @@ import {
   type UpdateTeacherPayload,
   type TeacherQueryParams,
 } from "@/lib/teachers.api";
+import { getFriendlyErrorDescription } from "@/lib/toast-errors";
 import { toast } from "sonner";
 
 export const teacherKeys = {
@@ -62,15 +63,17 @@ export function useCreateTeacher() {
     mutationFn: (data: CreateTeacherPayload) => teachersApi.create(data),
     onSuccess: (newTeacher: Teacher) => {
       queryClient.invalidateQueries({ queryKey: teacherKeys.all });
-      toast.success("Teacher created successfully", {
-        description: `${newTeacher.name} has been added to the center system.`,
+      toast.success("Teacher account created", {
+        description: `${newTeacher.name} was added to the teacher list.`,
       });
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to create teacher";
-      toast.error("Failed to create teacher", { description: message });
+      toast.error("Couldn't create teacher", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please check the teacher details and try again.",
+          conflict: "An account with this email already exists.",
+        }),
+      });
     },
   });
 }
@@ -83,15 +86,17 @@ export function useUpdateTeacher() {
       teachersApi.update(id, data),
     onSuccess: (updated: Teacher) => {
       queryClient.invalidateQueries({ queryKey: teacherKeys.all });
-      toast.success("Teacher updated successfully", {
+      toast.success("Teacher details updated", {
         description: `Changes to ${updated.name} have been saved.`,
       });
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to update teacher";
-      toast.error("Failed to update teacher", { description: message });
+      toast.error("Couldn't update teacher", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please review the changes and try again.",
+          conflict: "An account with this email already exists.",
+        }),
+      });
     },
   });
 }
@@ -103,16 +108,17 @@ export function useDeleteTeacher() {
     mutationFn: (id: string) => teachersApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teacherKeys.all });
-      toast.success("Teacher deleted successfully", {
-        description: "Teacher was removed from the system.",
+      toast.success("Teacher account deleted", {
+        description: "The teacher account has been removed.",
       });
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to delete teacher";
-      toast.error("Deletion not permitted", {
-        description: message,
+      toast.error("Couldn't delete teacher", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please try again.",
+          conflict:
+            "This teacher has classes, scheduled lectures, or attendance records. Reassign them or deactivate the account instead.",
+        }),
         duration: 5000,
       });
     },

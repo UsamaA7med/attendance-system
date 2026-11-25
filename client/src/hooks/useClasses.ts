@@ -6,6 +6,7 @@ import {
   type UpdateClassPayload,
   type ClassQueryParams,
 } from "@/lib/classes.api";
+import { getFriendlyErrorDescription } from "@/lib/toast-errors";
 import { toast } from "sonner";
 
 export const classKeys = {
@@ -62,15 +63,16 @@ export function useCreateClass() {
     mutationFn: (data: CreateClassPayload) => classesApi.create(data),
     onSuccess: (newClass: ClassItem) => {
       queryClient.invalidateQueries({ queryKey: classKeys.all });
-      toast.success("Class created successfully", {
+      toast.success("Class created", {
         description: `"${newClass.name}" has been created.`,
       });
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to create class";
-      toast.error("Failed to create class", { description: message });
+      toast.error("Couldn't create class", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please check the class details and try again.",
+        }),
+      });
     },
   });
 }
@@ -83,15 +85,16 @@ export function useUpdateClass() {
       classesApi.update(id, data),
     onSuccess: (updated: ClassItem) => {
       queryClient.invalidateQueries({ queryKey: classKeys.all });
-      toast.success("Class updated successfully", {
+      toast.success("Class details updated", {
         description: `Changes to "${updated.name}" have been saved.`,
       });
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to update class";
-      toast.error("Failed to update class", { description: message });
+      toast.error("Couldn't update class", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please review the changes and try again.",
+        }),
+      });
     },
   });
 }
@@ -103,16 +106,15 @@ export function useDeleteClass() {
     mutationFn: (id: string) => classesApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: classKeys.all });
-      toast.success("Class deleted successfully", {
+      toast.success("Class deleted", {
         description: "The class and its associated schedules have been removed.",
       });
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to delete class";
-      toast.error("Deletion not permitted", {
-        description: message,
+      toast.error("Couldn't delete class", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please try again.",
+        }),
         duration: 5000,
       });
     },

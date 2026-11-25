@@ -6,6 +6,7 @@ import {
   type UpdateStaffPayload,
   type StaffQueryParams,
 } from "@/lib/staff.api";
+import { getFriendlyErrorDescription } from "@/lib/toast-errors";
 import { toast } from "sonner";
 
 export const staffKeys = {
@@ -62,15 +63,17 @@ export function useCreateStaff() {
     mutationFn: (data: CreateStaffPayload) => staffApi.create(data),
     onSuccess: (newStaff: Staff) => {
       queryClient.invalidateQueries({ queryKey: staffKeys.all });
-      toast.success("Staff registered successfully", {
-        description: `${newStaff.name} has been added as a staff member.`,
+      toast.success("Staff account created", {
+        description: `${newStaff.name} was added to the staff list.`,
       });
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to register staff member";
-      toast.error("Failed to register staff member", { description: message });
+      toast.error("Couldn't create staff account", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please check the staff details and try again.",
+          conflict: "An account with this email already exists.",
+        }),
+      });
     },
   });
 }
@@ -83,15 +86,17 @@ export function useUpdateStaff() {
       staffApi.update(id, data),
     onSuccess: (updated: Staff) => {
       queryClient.invalidateQueries({ queryKey: staffKeys.all });
-      toast.success("Staff updated successfully", {
+      toast.success("Staff details updated", {
         description: `Changes to ${updated.name} have been saved.`,
       });
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to update staff member";
-      toast.error("Failed to update staff member", { description: message });
+      toast.error("Couldn't update staff account", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please review the changes and try again.",
+          conflict: "An account with this email already exists.",
+        }),
+      });
     },
   });
 }
@@ -103,15 +108,18 @@ export function useDeleteStaff() {
     mutationFn: (id: string) => staffApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: staffKeys.all });
-      toast.success("Staff deleted successfully", {
+      toast.success("Staff account deleted", {
         description: "The staff account has been removed.",
       });
     },
     onError: (err: unknown) => {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Failed to delete staff member";
-      toast.error("Deletion Failed", { description: message });
+      toast.error("Couldn't delete staff account", {
+        description: getFriendlyErrorDescription(err, {
+          fallback: "Please try again.",
+          conflict:
+            "This staff account has scheduled lectures or attendance records. Deactivate the account instead.",
+        }),
+      });
     },
   });
 }

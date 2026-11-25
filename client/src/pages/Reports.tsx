@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createReportsWorkbook } from "@/lib/reports-export";
+import { getFriendlyErrorDescription } from "@/lib/toast-errors";
 import { toast } from "sonner";
 
 const STATUS_COLORS = {
@@ -261,10 +262,14 @@ export function Reports() {
         },
       ]);
       downloadWorkbook(workbook, `attendance-reports-${range.startDate}-to-${range.endDate}.xlsx`);
-      toast.success("Excel report exported");
+      toast.success("Attendance report downloaded", {
+        description: "Your Excel report is ready.",
+      });
     } catch (error) {
-      toast.error("Excel export failed", {
-        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+      toast.error("Couldn't export attendance report", {
+        description: getFriendlyErrorDescription(error, {
+          fallback: "Please try again. If the problem continues, contact support.",
+        }),
       });
     }
   };

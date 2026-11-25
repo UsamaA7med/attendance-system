@@ -163,8 +163,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleLogout = async () => {
     await logout();
-    toast.success("Signed out successfully", {
-      description: "You have been logged out. Redirecting to login.",
+    toast.success("Signed out", {
+      description: "You have been signed out.",
     });
     navigate("/login", { replace: true });
   };

@@ -17,6 +17,8 @@ import {
 import { useStudents, studentKeys } from "@/hooks/useStudents";
 import { classKeys } from "@/hooks/useClasses";
 import { studentsApi } from "@/lib/students.api";
+import { getFriendlyErrorDescription } from "@/lib/toast-errors";
+import { useAuthStore } from "@/store/useAuthStore";
 import { useQueryClient } from "@tanstack/react-query";
 import type { AttendanceStatusType } from "@/lib/lectures.api";
 import type { StudentItem } from "@/lib/students.api";
@@ -221,6 +223,9 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
     enabled: isOpen && Boolean(lectureId),
   });
 
+  const user = useAuthStore((state) => state.user);
+  const canEnrollStudents =
+    user?.role?.toLowerCase() === "admin" || user?.role?.toLowerCase() === "staff";
   const queryClient = useQueryClient();
   const updateMutation = useUpdateLectureAttendance();
   const [isEnrolling, setIsEnrolling] = useState(false);
@@ -238,7 +243,7 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
   // 4. PERFORMANCE BOOST: Lazy fetch registered active students ONLY when the selector is opened
   const { data: allRegisteredStudents = [], isLoading: isLoadingAllStudents } = useStudents(
     { isActive: true },
-    { enabled: isOpen && showAddSelector }
+    { enabled: isOpen && canEnrollStudents && showAddSelector }
   );
 
   // Sync initial student statuses from fetched data (preserving any user-modified records)
@@ -373,7 +378,7 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
   // Add one or more chosen registered students to roll call and enroll them in class
   const handleAddStudentsToRollCall = useCallback(
     async (studentsToAdd: StudentItem[]) => {
-      if (!lecture || studentsToAdd.length === 0) return;
+      if (!canEnrollStudents || !lecture || studentsToAdd.length === 0) return;
 
       // 1. Instantly append to local records as PRESENT
       const newExtraItems: StudentAttendanceItem[] = [];
@@ -428,27 +433,29 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
         queryClient.invalidateQueries({ queryKey: classKeys.all });
         queryClient.invalidateQueries({ queryKey: studentKeys.all });
 
-        // Exactly ONE single toast for the entire operation
         toast.dismiss();
         toast.success(
           studentsToAdd.length === 1
-            ? `Added "${studentsToAdd[0].fullName}" to roll call`
-            : `Added ${studentsToAdd.length} students to roll call`,
+            ? `"${studentsToAdd[0].fullName}" added to roll call`
+            : `${studentsToAdd.length} students added to roll call`,
           {
             description: `Enrolled in "${lecture.class.name}".`,
           }
         );
-      } catch (err: unknown) {
-        const message =
-          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-          "Failed to enroll student(s)";
+      } catch (error: unknown) {
         toast.dismiss();
-        toast.error("Failed to add students to roll call", { description: message });
+        toast.error("Couldn't add all selected students", {
+          description: getFriendlyErrorDescription(error, {
+            fallback: "Refresh the roll call and check the class roster before trying again.",
+            conflict:
+              "Some selected students may already be enrolled. Refresh the roll call and check the class roster.",
+          }),
+        });
       } finally {
         setIsEnrolling(false);
       }
     },
-    [lecture, queryClient]
+    [canEnrollStudents, lecture, queryClient]
   );
 
   const handleToggleStudentSelection = useCallback((studentId: string) => {
@@ -635,25 +642,27 @@ export const TakeAttendanceModal = React.memo(function TakeAttendanceModal({
             )}
           </div>
 
-          <Button
-            type="button"
-            variant={showAddSelector ? "default" : "outline"}
-            size="sm"
-            className="h-7 text-[11px] gap-1"
-            onClick={() => setShowAddSelector((prev) => !prev)}
-          >
-            <UserPlus className="h-3.5 w-3.5" />
-            <span>Choose Registered Student</span>
-            {showAddSelector ? (
-              <ChevronUp className="h-3 w-3 ml-0.5" />
-            ) : (
-              <ChevronDown className="h-3 w-3 ml-0.5" />
-            )}
-          </Button>
+          {canEnrollStudents && (
+            <Button
+              type="button"
+              variant={showAddSelector ? "default" : "outline"}
+              size="sm"
+              className="h-7 text-[11px] gap-1"
+              onClick={() => setShowAddSelector((prev) => !prev)}
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              <span>Choose Registered Student</span>
+              {showAddSelector ? (
+                <ChevronUp className="h-3 w-3 ml-0.5" />
+              ) : (
+                <ChevronDown className="h-3 w-3 ml-0.5" />
+              )}
+            </Button>
+          )}
         </div>
 
         {/* Inline Registered Student Selector Panel (NO separate modal) */}
-        {showAddSelector && (
+        {canEnrollStudents && showAddSelector && (
           <div className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50/90 dark:bg-neutral-900/70 p-4 space-y-3 animate-in slide-in-from-top-2 duration-150">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
