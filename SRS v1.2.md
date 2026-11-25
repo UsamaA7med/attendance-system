@@ -2,7 +2,7 @@
 
 ## Student Attendance System
 
-**Document ID:** SRS-ATTENDANCE-1.2
+**Document ID:** SRS-ATTENDANCE-1.2\
 **Standard:** ISO/IEC/IEEE 29148:2018
 
 ---
@@ -10,11 +10,11 @@
 ## Document Control
 
 | Field | Value |
-|---|---|
+| --- | --- |
 | Title | Student Attendance System Software Requirements Specification |
 | Version | 1.2 |
 | Date | 2026-11-25 |
-| Author | Osama Ahmed |
+| Author | \[Author name / team – to be completed\] |
 | Status | Draft – as-built, pending stakeholder confirmation |
 | Repository | UsamaA7med/attendance-system |
 | Primary source | Repository code and database schema |
@@ -22,10 +22,10 @@
 ### Revision History
 
 | Version | Date | Author | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 1.0 | 2026-11-25 | Copilot SDK AI Assistant | Initial as-built SRS derived from the repository snapshot |
 | 1.1 | 2026-11-25 | Copilot SDK AI Assistant | Reviewed requirement atomicity and acceptance criteria; removed duplicate business-rule and data restatements |
-| 1.2 | 2026-11-25 | [Author name / team – to be completed] | Aligned document ID and version; renumbered requirement IDs sequentially; removed duplicate and implementation-level requirements; moved TBD items to Appendix B; replaced traceability ranges with a per-requirement matrix |
+| 1.2 | 2026-11-25 | \[Author name / team – to be completed\] | Aligned document ID and version; renumbered requirement IDs sequentially; removed duplicate and implementation-level requirements; moved TBD items to Appendix B; replaced traceability ranges with a per-requirement matrix |
 
 ---
 
@@ -60,7 +60,7 @@ The backend also contains legacy staff check-in and check-out endpoints, but no 
 ### 1.3 Definitions, Acronyms, and Abbreviations
 
 | Term | Definition |
-|---|---|
+| --- | --- |
 | Admin | User with the `ADMIN` role and full administrative access in the implemented authorization matrix |
 | API | Application Programming Interface |
 | Attendance record | One student's status for one lecture |
@@ -76,7 +76,7 @@ The backend also contains legacy staff check-in and check-out endpoints, but no 
 ### 1.4 References
 
 | Reference | Source |
-|---|---|
+| --- | --- |
 | ISO/IEC/IEEE 29148:2018 | Requirements engineering standard cited for document structure and requirement quality |
 | Repository README | `/README.md` |
 | Backend application | `/server/src/app.ts` |
@@ -116,7 +116,7 @@ The API is organized as feature modules: authentication, users, teachers, staff,
 ### 2.2 Product Functions
 
 | Function | Summary |
-|---|---|
+| --- | --- |
 | Authentication | Login, account provisioning, current-user lookup, token refresh, and logout |
 | Staff administration | Create, read, update, activate/deactivate, search, paginate, and delete staff accounts |
 | Teacher administration | Create, read, update, activate/deactivate, search, paginate, and delete teacher accounts |
@@ -130,7 +130,7 @@ The API is organized as feature modules: authentication, users, teachers, staff,
 ### 2.3 User Classes and Characteristics
 
 | User class | Characteristics | Primary permissions |
-|---|---|---|
+| --- | --- | --- |
 | Administrator | Center administrator operating all management areas | Staff and teacher CRUD; all class, lecture, student, attendance, and report operations permitted by the route matrix |
 | Staff | Operational employee managing students and attendance | Student CRUD and enrollment; lecture and attendance operations; report and lecture views |
 | Teacher | Instructor assigned to one or more classes | Own classes and lectures only; own-student read access; class and lecture CRUD for authorized own records; roll call |
@@ -148,7 +148,7 @@ The API is organized as feature modules: authentication, users, teachers, staff,
 ### 2.5 Design and Implementation Constraints
 
 | Constraint | Description |
-|---|---|
+| --- | --- |
 | DC-001 | The client shall communicate with the API through Axios. |
 | DC-002 | The API shall use Express 5 and TypeScript. |
 | DC-003 | PostgreSQL shall be accessed through Prisma and the PostgreSQL adapter. |
@@ -185,7 +185,7 @@ The following are TBD:
 #### 3.1.1 Authentication and Session Management
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | FR-AUTH-001 | The system shall authenticate a user who submits an email and password that match an active account. | Must | `auth.service.ts`, `auth.schema.ts` | Valid credentials for an active account return HTTP 200 and an access token; invalid credentials or an inactive account return HTTP 401. |
 | FR-AUTH-002 | The system shall reject login when the supplied email is not a syntactically valid email. | Must | `auth.schema.ts` | Invalid email input is rejected with a validation error. |
 | FR-AUTH-003 | The system shall reject login when the password field is empty. | Must | `auth.schema.ts` | An empty password is rejected with a validation error. |
@@ -213,7 +213,7 @@ The following are TBD:
 #### 3.1.2 Staff Management
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | FR-STAFF-001 | The system shall restrict Staff management endpoints to authenticated Administrators. | Must | `staff.routes.ts` | A non-admin receives HTTP 403 and cannot execute a Staff management operation. |
 | FR-STAFF-002 | The system shall allow an Administrator to create a Staff account. | Must | `staff.routes.ts`, `staff.service.ts` | A valid account is created and returned with HTTP 201. |
 | FR-STAFF-003 | The system shall allow an Administrator to view one Staff account by ID. | Must | `staff.routes.ts` | A valid ID returns the Staff profile; unknown IDs return HTTP 404. |
@@ -229,7 +229,7 @@ The following are TBD:
 #### 3.1.3 Teacher Management
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | FR-TCHR-001 | The system shall restrict Teacher management endpoints to authenticated Administrators. | Must | `teachers.routes.ts` | A non-admin receives HTTP 403 and cannot execute a Teacher management operation. |
 | FR-TCHR-002 | The system shall allow an Administrator to create a Teacher account. | Must | `teachers.routes.ts`, `teachers.service.ts` | A valid account is created and returned with HTTP 201. |
 | FR-TCHR-003 | The system shall allow an Administrator to search Teacher accounts by name, email, phone, or department. | Must | `teachers.repository.ts` | A case-insensitive text match in any listed field returns the matching Teacher account. |
@@ -244,7 +244,7 @@ The following are TBD:
 #### 3.1.4 Student Management and Enrollment
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | FR-STU-001 | The system shall allow authenticated Administrators and Staff to create students. | Must | `students.routes.ts`, `students.service.ts` | Valid student data creates a student and returns HTTP 201. |
 | FR-STU-002 | The system shall allow authenticated Administrators, Staff, and Teachers to view the Student directory. | Must | `students.routes.ts` | Authorized users receive the permitted student list. |
 | FR-STU-003 | The system shall restrict a Teacher's student list to students with an `ACTIVE` enrollment in a class assigned to that Teacher. | Must | `students.service.ts`, `students.repository.ts` | Every returned student has at least one matching `ACTIVE` enrollment for the Teacher's user ID. |
@@ -266,7 +266,7 @@ The following are TBD:
 #### 3.1.5 Class Management
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | FR-CLS-001 | The system shall allow authenticated Administrators and Teachers to create classes. | Must | `classes.routes.ts`, `classes.service.ts` | A valid class is created; non-authorized Staff receive HTTP 403. |
 | FR-CLS-002 | The system shall assign a Teacher-created class to the authenticated Teacher. | Must | `classes.service.ts` | The created class's `teacherId` equals the authenticated Teacher ID. |
 | FR-CLS-003 | The system shall require an Administrator to specify a teacher when creating a class. | Must | `classes.service.ts` | Missing teacher ID for an Administrator returns HTTP 400. |
@@ -288,7 +288,7 @@ The following are TBD:
 #### 3.1.6 Lecture Management
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | FR-LCT-001 | The system shall allow an authenticated Administrator or Staff member to view lectures. | Must | `lectures.routes.ts` | An authenticated Administrator or Staff member receives lecture records authorized by the submitted filters. |
 | FR-LCT-002 | The system shall restrict a Teacher's lecture list to lectures belonging to that Teacher's classes. | Must | `lectures.service.ts`, `lectures.repository.ts` | A Teacher receives no lecture for a class assigned to another Teacher. |
 | FR-LCT-003 | The system shall allow an Administrator or Staff member to create a lecture for an existing class. | Must | `lectures.routes.ts`, `lectures.service.ts` | A valid lecture is created and `createdById` equals the authenticated user's ID. |
@@ -309,7 +309,7 @@ The following are TBD:
 #### 3.1.7 Attendance Roll Call
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | FR-ATT-001 | The system shall allow an Administrator or Staff member to view the active enrolled students for a lecture. | Must | `lectures.service.ts`, `lectures.routes.ts` | The roll call contains every student whose enrollment status is `ACTIVE` for the lecture's class. |
 | FR-ATT-002 | The system shall allow an assigned Teacher to view active enrolled students for a lecture. | Must | `lectures.service.ts`, `lectures.routes.ts` | The roll call contains matching active enrollments only when `class.teacherId` equals the Teacher's user ID. |
 | FR-ATT-003 | The system shall allow a roll call status of `PRESENT`, `ABSENT`, `LATE`, or `EXCUSED`. | Must | `lectures.schema.ts`, Prisma enum | The API accepts only those four values. |
@@ -323,7 +323,7 @@ The following are TBD:
 #### 3.1.8 Reports and Export
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | FR-RPT-001 | The system shall allow Administrators, Staff, and Teachers to open the current Reports UI route. | Should | `DashboardLayout.tsx`, `App.tsx` | The Reports route renders without role routing blocking any listed role. |
 | FR-RPT-002 | The system shall provide a report for the 7 calendar days ending on the current date. | Must | `client/src/pages/Reports.tsx` | Selection of 7 days sets the inclusive start date to the current date minus 6 days. |
 | FR-RPT-003 | The system shall provide a report for the 30 calendar days ending on the current date. | Must | `client/src/pages/Reports.tsx` | Selection of 30 days sets the inclusive start date to the current date minus 29 days. |
@@ -340,7 +340,7 @@ The following are TBD:
 #### 3.1.9 Navigation and System Access
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | FR-NAV-001 | The system shall redirect unauthenticated users to `/login`. | Must | `ProtectedRoute.tsx`, `App.tsx` | An unauthenticated request to a protected route resolves to `/login`. |
 | FR-NAV-002 | The system shall redirect authenticated Teachers to `/classes` for the root route. | Must | `App.tsx`, `DashboardLayout.tsx` | A Teacher opening `/` reaches `/classes`. |
 | FR-NAV-003 | The system shall redirect authenticated non-Teacher users to `/attendance` for the root route. | Must | `App.tsx` | An authenticated Admin or Staff opening `/` reaches `/attendance`. |
@@ -357,7 +357,7 @@ The following are TBD:
 #### 3.2.1 User Interface
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | FR-UI-001 | The system shall provide desktop navigation as a fixed left sidebar. | Should | `DashboardLayout.tsx` | Viewports at or above the Tailwind `md` breakpoint display the fixed sidebar. |
 | FR-UI-002 | The system shall provide mobile navigation as a slide-in sidebar drawer. | Should | `DashboardLayout.tsx` | Viewports below `md` display a menu control and optional drawer. |
 | FR-UI-003 | The system shall display directory loading skeletons while directory data is loading. | Could | page components | Loading directory data replaces data rows with the implemented skeleton placeholders. |
@@ -373,7 +373,7 @@ No dedicated hardware interface is implemented. The system requires only a netwo
 #### 3.2.3 Software and API Interface
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | FR-IF-001 | The system shall expose JSON API responses with `success`, `message`, `timestamp`, and either `data` or `errors`. | Must | `api-response.ts` | Successful and error bodies follow the implemented envelope. |
 | FR-IF-002 | The system shall include pagination metadata for paginated API responses. | Must | `api-response.ts`, feature repositories | Paginated bodies include page, limit, total, totalPages, hasNextPage, and hasPrevPage. |
 | FR-IF-003 | The system shall return HTTP 400 for Zod validation failures. | Must | validation middleware and error handler | Invalid schema input is not passed to a controller and returns HTTP 400. |
@@ -387,7 +387,7 @@ No dedicated hardware interface is implemented. The system requires only a netwo
 #### 3.2.4 Communication Interface
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | NFR-COM-001 | The client shall use JSON over HTTP for API communication. | Must | `client/src/lib/api.ts`, Express setup | API calls serialize JSON request bodies and consume JSON responses. |
 | NFR-COM-002 | The client shall time out an API request after 10,000 milliseconds. | Must | `client/src/lib/api.ts` | A request that has not completed within 10 seconds is rejected by Axios. |
 | NFR-COM-003 | The API shall accept cross-origin requests only from the configured client origins and Vercel preview origins. | Must | `server/src/app.ts` | Requests from allowed origins complete with credentials; requests from other origins are rejected outside development. |
@@ -401,7 +401,7 @@ No measurable response-time or throughput targets are defined in the repository 
 #### 3.3.2 Security
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | NFR-SEC-001 | The system shall hash passwords with bcrypt before persistence. | Must | `auth.service.ts`, seed script | Stored password fields contain bcrypt hashes and not plaintext passwords. |
 | NFR-SEC-002 | The system shall sign access tokens with `JWT_ACCESS_SECRET`. | Must | `auth.service.ts` | Access tokens verify only with the configured access secret. |
 | NFR-SEC-003 | The system shall sign refresh tokens with `JWT_REFRESH_SECRET`. | Must | `auth.service.ts` | Refresh tokens verify only with the configured refresh secret. |
@@ -415,7 +415,7 @@ No measurable response-time or throughput targets are defined in the repository 
 #### 3.3.3 Reliability
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | NFR-REL-001 | The system shall return an implemented global error envelope for unhandled application errors. | Must | `error-handler.ts`, `api-response.ts` | Unhandled requests receive an HTTP error response containing `success: false`, message, and timestamp. |
 | NFR-REL-002 | The system shall clear local authentication state after refresh failure. | Must | `client/src/lib/api.ts`, `useAuthStore.ts` | The access token is removed and the auth expired event is dispatched after refresh failure. |
 
@@ -424,7 +424,7 @@ No measurable response-time or throughput targets are defined in the repository 
 #### 3.3.4 Availability
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | NFR-AVL-001 | The system shall expose a health endpoint that reports healthy status, uptime, and timestamp. | Should | `server/src/app.ts` | `/health` returns HTTP 200 JSON while the API process is healthy. |
 
 *Note:* The uptime target and hosting regions are not defined (OQ-005, OQ-017).
@@ -432,7 +432,7 @@ No measurable response-time or throughput targets are defined in the repository 
 #### 3.3.5 Usability
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | NFR-USA-001 | The system shall provide a loading indicator during application loading and mutations where implemented. | Could | `GlobalLoadingIndicator.tsx` | Loading state is reflected while active query or mutation indicators are present. |
 
 *Note:* Desktop and mobile layouts are specified in FR-UI-001 and FR-UI-002; the report range selector in FR-RPT-002 to FR-RPT-006. No accessibility standard is defined (OQ-012).
@@ -440,7 +440,7 @@ No measurable response-time or throughput targets are defined in the repository 
 #### 3.3.6 Maintainability
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | NFR-MNT-001 | The backend shall place each feature in its own module containing route, controller, service, repository, schema, and type files. | Should | `server/src/modules` | An implementation review finds the listed files under the feature directory or confirms that a named file is not present in the feature architecture. |
 | NFR-MNT-002 | The backend shall exit with status 0 for `npm run typecheck --workspace=server`. | Must | `server/package.json` | The command produces no TypeScript diagnostics in the validated environment. |
 | NFR-MNT-003 | The root build shall exit with status 0 after building the server and client workspaces. | Must | root `package.json` | `npm run build` creates backend and frontend build output without build-script errors. |
@@ -450,7 +450,7 @@ No measurable response-time or throughput targets are defined in the repository 
 #### 3.3.7 Portability
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | NFR-POR-001 | The server shall obtain database and runtime configuration from environment variables. | Must | `env.ts`, Prisma database module | Runtime starts only with the required deployment variables or documented defaults. |
 | NFR-POR-002 | The client shall obtain its API base URL from `VITE_API_URL` or an environment-specific default. | Must | `client/src/lib/api.ts` | Production uses `/api`; development uses `http://localhost:5000/api` unless `VITE_API_URL` is set. |
 
@@ -459,7 +459,7 @@ No measurable response-time or throughput targets are defined in the repository 
 #### 3.3.8 Scalability
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | NFR-SCL-001 | The system shall accept pagination limits from 1 through 100 for paginated Student, Teacher, Staff, Class, and Lecture endpoints. | Should | feature query schemas | A limit within the range is processed; a limit above 100 is rejected by validation. |
 
 *Note:* No concurrent-user target is defined (OQ-022). The 100-record page limit also applies to lecture listings.
@@ -473,7 +473,7 @@ No compliance or legal requirements are defined in the repository. Applicable pr
 #### 3.4.1 Core Entities
 
 | Entity | Key attributes | Relationships |
-|---|---|---|
+| --- | --- | --- |
 | User | id, name, email, passwordHash, phone, role, department, position, isActive, timestamps | Taught classes; created lectures; marked attendance; refresh tokens |
 | RefreshToken | id, token, userId, expiresAt, revokedAt, createdAt | Belongs to User; cascade deleted with User |
 | Student | id, fullName, phone, parentName, parentPhone, notes, isActive, enrollmentDate, timestamps | Enrollments and attendance records |
@@ -485,7 +485,7 @@ No compliance or legal requirements are defined in the repository. Applicable pr
 #### 3.4.2 Data Constraints
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | FR-DATA-001 | The system shall enforce unique student enrollment for each student-class pair. | Must | Prisma `Enrollment` unique key | A second enrollment operation for the same student and class updates the existing record to `ACTIVE` instead of inserting a second record. |
 | FR-DATA-002 | The system shall cascade delete lectures when their class is deleted. | Must | Prisma schema | Deleting a class removes all lectures whose `classId` equals the deleted class ID. |
 | FR-DATA-003 | The system shall cascade delete attendance records when their lecture is deleted. | Must | Prisma schema | Deleting a lecture removes all attendance records whose `lectureId` equals the deleted lecture ID. |
@@ -498,7 +498,7 @@ No compliance or legal requirements are defined in the repository. Applicable pr
 ### 3.5 Business Rules
 
 | ID | Description | Priority | Source | Acceptance Criteria |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | BR-001 | The system shall recognize exactly one of `ADMIN`, `STAFF`, or `TEACHER` as a system role. | Must | Prisma `Role` enum | Unsupported roles are not accepted by the database model. |
 | BR-002 | The system shall recognize exactly one of `PRESENT`, `ABSENT`, `LATE`, or `EXCUSED` for attendance status. | Must | Prisma `AttendanceStatus` enum | Unsupported values are rejected. |
 | BR-003 | The system shall recognize exactly `ACTIVE` or `DROPPED` for an enrollment status. | Must | Prisma `EnrollmentStatus` enum | Unsupported values are rejected. |
@@ -805,7 +805,7 @@ sequenceDiagram
 Status reflects the repository review. No automated test suite was found, so test cases are not yet defined (see OQ-016). Each requirement lists its source file(s) so it can be traced back to the implementation.
 
 | Requirement ID | Section | Source | Test Case | Status |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | FR-AUTH-001 | 3.1.1 Authentication and Session Management | `auth.service.ts`, `auth.schema.ts` | Not yet defined | Implemented (per repository review) |
 | FR-AUTH-002 | 3.1.1 Authentication and Session Management | `auth.schema.ts` | Not yet defined | Implemented (per repository review) |
 | FR-AUTH-003 | 3.1.1 Authentication and Session Management | `auth.schema.ts` | Not yet defined | Implemented (per repository review) |
@@ -984,7 +984,7 @@ Status reflects the repository review. No automated test suite was found, so tes
 ## Appendix A. Additional Glossary Terms (supplements Section 1.3)
 
 | Term | Meaning |
-|---|---|
+| --- | --- |
 | Access token | Short-lived JWT used as a Bearer token |
 | Active account | User for which `isActive=true` |
 | Active enrollment | Enrollment whose status is `ACTIVE` |
@@ -998,7 +998,7 @@ Status reflects the repository review. No automated test suite was found, so tes
 ## Appendix B. Open Questions
 
 | ID | Area | Open question | Impact |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | OQ-001 | Project identity | Should the production product name, organization name, and formal system owner be added? | Document metadata and branding |
 | OQ-002 | Supported environment | Which Node.js versions and browser versions are officially supported? | Compatibility and test matrix |
 | OQ-003 | Time zone | Should lecture dates and daily attendance logic use UTC or a center-specific local time zone? | Date boundaries and reporting |
