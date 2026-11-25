@@ -22,6 +22,7 @@ const Classes = lazy(() => import("@/pages/Classes"));
 const Lectures = lazy(() => import("@/pages/Lectures"));
 const Attendance = lazy(() => import("@/pages/Attendance"));
 const Students = lazy(() => import("@/pages/Students"));
+const Reports = lazy(() => import("@/pages/Reports"));
 
 export default function App() {
   return (
@@ -47,6 +48,14 @@ export default function App() {
                   element={
                     <Suspense fallback={<LoadingSpinner fullPage size="lg" label="Loading attendance..." />}>
                       <Attendance />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/reports"
+                  element={
+                    <Suspense fallback={<LoadingSpinner fullPage size="lg" label="Loading reports..." />}>
+                      <Reports />
                     </Suspense>
                   }
                 />

@@ -9,6 +9,7 @@ import {
   GraduationCap,
   BookOpen,
   ClipboardCheck,
+  BarChart3,
   Users,
   ShieldCheck,
   Menu,
@@ -55,6 +56,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           badge: null,
         },
         {
+          title: "Reports",
+          path: "/reports",
+          icon: BarChart3,
+          badge: null,
+        },
+        {
           title: "Students",
           path: "/students",
           icon: Users,
@@ -67,6 +74,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           title: "Attendance",
           path: "/attendance",
           icon: ClipboardCheck,
+          badge: null,
+        },
+        {
+          title: "Reports",
+          path: "/reports",
+          icon: BarChart3,
           badge: null,
         },
         {
@@ -108,6 +121,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           badge: null,
         },
         {
+          title: "Reports",
+          path: "/reports",
+          icon: BarChart3,
+          badge: null,
+        },
+        {
           title: "Lectures",
           path: "/lectures",
           icon: CalendarDays,
@@ -125,6 +144,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     switch (location.pathname) {
       case "/attendance":
         return isTeacher ? "My Class Attendance" : "Student Attendance";
+      case "/reports":
+        return "Attendance Reports";
       case "/students":
         return isTeacher ? "My Students" : "Students Directory";
       case "/classes":
