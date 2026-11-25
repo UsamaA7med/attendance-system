@@ -14,7 +14,7 @@
 | Title | Student Attendance System Software Requirements Specification |
 | Version | 1.2 |
 | Date | 2026-11-25 |
-| Author | \[Author name / team – to be completed\] |
+| Author | Osama Ahmed |
 | Status | Draft – as-built, pending stakeholder confirmation |
 | Repository | UsamaA7med/attendance-system |
 | Primary source | Repository code and database schema |
@@ -25,7 +25,7 @@
 | --- | --- | --- | --- |
 | 1.0 | 2026-11-25 | Copilot SDK AI Assistant | Initial as-built SRS derived from the repository snapshot |
 | 1.1 | 2026-11-25 | Copilot SDK AI Assistant | Reviewed requirement atomicity and acceptance criteria; removed duplicate business-rule and data restatements |
-| 1.2 | 2026-11-25 | \[Author name / team – to be completed\] | Aligned document ID and version; renumbered requirement IDs sequentially; removed duplicate and implementation-level requirements; moved TBD items to Appendix B; replaced traceability ranges with a per-requirement matrix |
+| 1.2 | 2026-11-25 | Osama Ahmed | Aligned document ID and version; renumbered requirement IDs sequentially; removed duplicate and implementation-level requirements; moved TBD items to Appendix B; replaced traceability ranges with a per-requirement matrix |
 
 ---
 
@@ -631,12 +631,12 @@ flowchart LR
 ```mermaid
 erDiagram
   USER ||--o{ REFRESH_TOKEN : owns
-  USER ||--o{ CLASS : teaches
+  USER ||--o{ SCHOOL_CLASS : teaches
   USER ||--o{ LECTURE : creates
   USER o|--o{ ATTENDANCE : marks
   STUDENT ||--o{ ENROLLMENT : has
-  CLASS ||--o{ ENROLLMENT : contains
-  CLASS ||--o{ LECTURE : schedules
+  SCHOOL_CLASS ||--o{ ENROLLMENT : contains
+  SCHOOL_CLASS ||--o{ LECTURE : schedules
   LECTURE ||--o{ ATTENDANCE : has
   STUDENT ||--o{ ATTENDANCE : receives
 
@@ -665,7 +665,7 @@ erDiagram
     string notes
     boolean isActive
   }
-  CLASS {
+  SCHOOL_CLASS {
     string id PK
     string name
     string description
@@ -698,6 +698,8 @@ erDiagram
     datetime markedAt
   }
 ```
+
+Note: `SCHOOL_CLASS` in the diagram corresponds to the `CLASS` entity used elsewhere in this document. The diagram uses a different name because `CLASS` is a reserved word in Mermaid.
 
 ### 5.3 System Context and Architecture
 
