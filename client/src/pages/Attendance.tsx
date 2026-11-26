@@ -35,7 +35,7 @@ export function Attendance() {
 
   const getTodayString = () => new Date().toLocaleDateString("en-CA");
 
-  const [selectedDate, setSelectedDate] = useState<string>(getTodayString());
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedClassId, setSelectedClassId] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -133,9 +133,11 @@ export function Attendance() {
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
               {isTeacher ? "My Class Attendance" : "Student Attendance"}
             </h1>
-            <Badge variant="outline" className="text-xs">
-              {isTeacher ? "Teacher Portal" : isAdmin ? "Admin Portal" : "Staff Portal"}
-            </Badge>
+            {!isAdmin && (
+              <Badge variant="outline" className="text-xs">
+                {isTeacher ? "Teacher Portal" : "Staff Portal"}
+              </Badge>
+            )}
           </div>
           <p className="mt-1 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
             {isTeacher
