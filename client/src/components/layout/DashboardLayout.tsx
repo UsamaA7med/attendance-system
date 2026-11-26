@@ -34,7 +34,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Redirect root path (/) to appropriate landing view
   if (location.pathname === "/") {
-    return <Navigate to={isTeacher ? "/classes" : "/attendance"} replace />;
+    return <Navigate to="/reports" replace />;
   }
 
   const navItems = isTeacher

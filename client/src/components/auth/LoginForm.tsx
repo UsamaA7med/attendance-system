@@ -55,8 +55,7 @@ export const LoginForm = React.memo(function LoginForm() {
         description: `Welcome back, ${user.name}.`,
       });
 
-      const destination = user.role?.toLowerCase() === "teacher" ? "/classes" : "/attendance";
-      navigate(destination, { replace: true });
+      navigate("/reports", { replace: true });
     } catch (error: unknown) {
       toast.error("Couldn't sign in", {
         description: getFriendlyErrorDescription(error, {

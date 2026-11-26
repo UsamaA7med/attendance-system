@@ -4,16 +4,13 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { queryClient } from "@/lib/queryClient";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { useAuthStore } from "@/store/useAuthStore";
 import { Login } from "@/pages/Login";
 import { ProtectedRoute, PublicRoute, AdminRoute, RoleRoute } from "@/components/auth/ProtectedRoute";
 import { GlobalLoadingIndicator } from "@/components/common/GlobalLoadingIndicator";
 import { LoadingSpinner } from "@/components/ui/spinner";
 
 function RootRedirect() {
-  const user = useAuthStore((state) => state.user);
-  const isTeacher = user?.role?.toLowerCase() === "teacher";
-  return <Navigate to={isTeacher ? "/classes" : "/attendance"} replace />;
+  return <Navigate to="/reports" replace />;
 }
 
 const Teachers = lazy(() => import("@/pages/Teachers"));
