@@ -40,6 +40,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navItems = isTeacher
     ? [
         {
+          title: "Reports",
+          path: "/reports",
+          icon: BarChart3,
+          badge: null,
+        },
+        {
           title: "Classes",
           path: "/classes",
           icon: BookOpen,
@@ -58,12 +64,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           badge: null,
         },
         {
-          title: "Reports",
-          path: "/reports",
-          icon: BarChart3,
-          badge: null,
-        },
-        {
           title: "Students",
           path: "/students",
           icon: Users,
@@ -73,15 +73,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     : isAdmin
     ? [
         {
-          title: "Attendance",
-          path: "/attendance",
-          icon: ClipboardCheck,
-          badge: null,
-        },
-        {
           title: "Reports",
           path: "/reports",
           icon: BarChart3,
+          badge: null,
+        },
+        {
+          title: "Attendance",
+          path: "/attendance",
+          icon: ClipboardCheck,
           badge: null,
         },
         {
@@ -117,15 +117,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       ]
     : [
         {
-          title: "Attendance",
-          path: "/attendance",
-          icon: ClipboardCheck,
-          badge: null,
-        },
-        {
           title: "Reports",
           path: "/reports",
           icon: BarChart3,
+          badge: null,
+        },
+        {
+          title: "Attendance",
+          path: "/attendance",
+          icon: ClipboardCheck,
           badge: null,
         },
         {

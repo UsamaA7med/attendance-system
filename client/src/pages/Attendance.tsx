@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { TableSkeletonRows } from "@/components/ui/table-skeleton";
 import { TakeAttendanceModal } from "@/components/classes/TakeAttendanceModal";
 import {
@@ -31,7 +30,6 @@ import { DataTableContainer, DataTableFilterBar, FilterSelect } from "@/componen
 export function Attendance() {
   const { user } = useAuthStore();
   const isTeacher = user?.role?.toLowerCase() === "teacher";
-  const isAdmin = user?.role?.toLowerCase() === "admin";
 
   const getTodayString = () => new Date().toLocaleDateString("en-CA");
 
@@ -133,11 +131,6 @@ export function Attendance() {
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
               {isTeacher ? "My Class Attendance" : "Student Attendance"}
             </h1>
-            {!isAdmin && (
-              <Badge variant="outline" className="text-xs">
-                {isTeacher ? "Teacher Portal" : "Staff Portal"}
-              </Badge>
-            )}
           </div>
           <p className="mt-1 text-xs sm:text-sm text-neutral-500 dark:text-neutral-400">
             {isTeacher
